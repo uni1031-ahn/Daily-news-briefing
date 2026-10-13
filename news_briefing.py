@@ -297,15 +297,33 @@ def send_email(html_body: str, text_body: str):
     msg["From"], msg["To"] = user, (to or user)
     msg.attach(MIMEText(text_body, "plain", "utf-8"))
     msg.attach(MIMEText(html_body, "html", "utf-8"))
-    try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as s:
-            s.login(user, pw)
-            s.sendmail(user, [x.strip() for x in (to or user).split(",")], msg.as_string())
-        print(f"[이메일 발송 완료] → {to or user}")
-        return True
-    except Exception as ex:
-        print(f"[이메일 발송 실패] {ex}")
-        return False
+    rcpts = [x.strip() for x in (to or user).split(",") if x.strip()]
+    # 연결이 끊기는 경우가 있어 587(STARTTLS) → 465(SSL) 순으로, 각 2회씩 재시도
+    attempts = [("starttls", 587), ("ssl", 465)] * 2
+    last_err = None
+    for mode, port in attempts:
+        try:
+            if mode == "ssl":
+                s = smtplib.SMTP_SSL("smtp.gmail.com", port, timeout=30)
+            else:
+                s = smtplib.SMTP("smtp.gmail.com", port, timeout=30)
+                s.ehlo()
+                s.starttls()
+                s.ehlo()
+            with s:
+                s.login(user, pw)
+                s.sendmail(user, rcpts, msg.as_string())
+            print(f"[이메일 발송 완료] {mode}:{port} → {', '.join(rcpts)}")
+            return True
+        except smtplib.SMTPAuthenticationError as ex:
+            print(f"[이메일 발송 실패] 로그인 거부: 앱 비밀번호/계정 주소를 확인하세요. ({ex})")
+            return False
+        except Exception as ex:
+            last_err = ex
+            print(f"[재시도] {mode}:{port} 실패: {ex}")
+            time.sleep(5)
+    print(f"[이메일 발송 실패] {last_err}")
+    return False
 
 
 # ───────────────────────── main ─────────────────────────
