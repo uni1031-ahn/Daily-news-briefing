@@ -173,12 +173,66 @@ def cluster(items):
     return clusters
 
 
-def rank(clusters, top_n):
-    def score(c):
+# 화제성 점수에 가산점을 주는 키워드 (필요하면 자유롭게 수정/추가하세요)
+IMPORTANT_KEYWORDS = {
+    "보험": ["금감원", "금융위", "금융감독원", "보험업법", "제재", "과징금", "인상", "인하",
+            "개정", "도입", "시행", "소송", "대법원", "판결", "실손", "IFRS17", "K-ICS",
+            "인수", "합병", "M&A", "손해율", "적자", "흑자", "민원", "불완전판매"],
+    "의료": ["복지부", "보건복지부", "의대", "정원", "전공의", "수가", "건강보험", "건보",
+            "심평원", "식약처", "허가", "의료법", "파업", "개정", "시행", "소송", "판결",
+            "필수의료", "응급", "임상", "승인", "급여", "약가", "리베이트"],
+}
+
+
+def external_buzz(title: str) -> int:
+    """같은 이슈를 최근 2일간 보도한 '서로 다른 언론사' 수 (구글뉴스 검색, 15개 지정 신문사 밖 포함)."""
+    tokens = [t for t in norm(title).split() if len(t) >= 2][:6]
+    if not tokens:
+        return 0
+    try:
+        q = quote(" ".join(tokens) + " when:2d")
+        feed = feedparser.parse(f"https://news.google.com/rss/search?q={q}&hl=ko&gl=KR&ceid=KR:ko",
+                                request_headers=UA)
+        pubs = {(e.get("source", {}) or {}).get("title", "") for e in feed.entries}
+        pubs.discard("")
+        return len(pubs)
+    except Exception:
+        return 0
+
+
+def rank(clusters, top_n, field=""):
+    """TOP_N 중 BUZZ_RATIO(기본 0.5) 만큼은 '화제성 순', 나머지는 '최신 순'으로 채움.
+    반환: (화제성 목록, 최신 목록)  — 두 목록은 서로 겹치지 않음."""
+    ratio = min(max(float(os.getenv("BUZZ_RATIO", "0.5") or "0.5"), 0.0), 1.0)
+    buzz_n = round(top_n * ratio)
+    recent_n = top_n - buzz_n
+    use_buzz = os.getenv("USE_EXTERNAL_BUZZ", "1") != "0"
+    kws = IMPORTANT_KEYWORDS.get(field, [])
+
+    def newest(c):
+        return max((a["pub"] for a in c["articles"] if a["pub"]), default=EPOCH)
+
+    def base(c):
         srcs = {a["source"] for a in c["articles"]}
-        newest = max((a["pub"] for a in c["articles"] if a["pub"]), default=EPOCH)
-        return (len(srcs), newest)
-    return sorted(clusters, key=score, reverse=True)[:top_n]
+        return len(srcs) * 3 + min(len(c["articles"]), 6) * 0.5
+
+    buzz_top = []
+    if buzz_n:
+        ranked = sorted(clusters, key=lambda c: (base(c), newest(c)), reverse=True)
+        cand = ranked[: buzz_n * 3]      # 상위 후보만 외부 보도량 조회 (호출 수 절약)
+        for c in cand:
+            title = c["articles"][0]["title"]
+            c["buzz"] = external_buzz(title) if use_buzz else 0
+            if use_buzz:
+                time.sleep(0.7)
+            hit = sum(1 for k in kws if k in title)
+            c["score"] = base(c) + min(c["buzz"], 15) * 1.0 + min(hit, 2) * 1.5
+        buzz_top = sorted(cand, key=lambda c: (c["score"], newest(c)), reverse=True)[:buzz_n]
+
+    chosen = {id(c) for c in buzz_top}
+    rest = [c for c in clusters if id(c) not in chosen]
+    recent_top = sorted(rest, key=lambda c: (newest(c), base(c)), reverse=True)[:recent_n]
+    return buzz_top, recent_top
 
 
 # ───────────────────────── 요약 ─────────────────────────
@@ -250,6 +304,8 @@ def build(sections):
         for i, c in enumerate(top, 1):
             a = c["articles"][0]
             src_txt = ", ".join(sorted({x["source"] for x in c["articles"]}))
+            if c.get("buzz"):
+                src_txt += f" · 🔥관련보도 {c['buzz']}곳"
             link = c.get("url", a["link"])
             text_lines.append(f"{i}. {a['title']}  [{src_txt}]")
             if c.get("summary"):
@@ -275,6 +331,8 @@ def build_markdown(sections):
         for i, c in enumerate(top, 1):
             a = c["articles"][0]
             src_txt = ", ".join(sorted({x["source"] for x in c["articles"]}))
+            if c.get("buzz"):
+                src_txt += f" · 🔥관련보도 {c['buzz']}곳"
             link = c.get("url", a["link"])
             title = a["title"].replace("[", "\\[").replace("]", "\\]")
             lines.append(f"{i}. **[{title}]({link})** — _{src_txt}_")
@@ -427,12 +485,15 @@ def main():
             time.sleep(0.5)
         if args.check:
             continue
-        top = rank(cluster(items), TOP_N)
-        for c in top:
+        buzz_top, recent_top = rank(cluster(items), TOP_N, field)
+        for c in buzz_top + recent_top:
             summarize(c)
-        ok = sum(1 for c in top if c.get("summary"))
-        print(f"[{field}] 요약 성공 {ok}/{len(top)}")
-        sections[field] = top
+        ok = sum(1 for c in buzz_top + recent_top if c.get("summary"))
+        print(f"[{field}] 요약 성공 {ok}/{len(buzz_top) + len(recent_top)}")
+        if buzz_top:
+            sections[f"{field} 화제성"] = buzz_top
+        if recent_top:
+            sections[f"{field} 최신"] = recent_top
     if args.check:
         print("\n'수집실패'인 신문사는 SOURCES의 도메인을 확인해 수정하세요.")
         return
