@@ -265,7 +265,50 @@ def build(sections):
     return "\n".join(text_lines), "\n".join(html_parts)
 
 
+def build_markdown(sections):
+    today = datetime.now(KST).strftime("%Y-%m-%d")
+    owner = os.getenv("GITHUB_REPOSITORY_OWNER", "")
+    lines = [f"@{owner} 오늘의 보험·의료 뉴스 브리핑입니다 ({today})\n" if owner
+             else f"오늘의 보험·의료 뉴스 브리핑입니다 ({today})\n"]
+    for field, top in sections.items():
+        lines.append(f"## {field} TOP {len(top)}\n")
+        for i, c in enumerate(top, 1):
+            a = c["articles"][0]
+            src_txt = ", ".join(sorted({x["source"] for x in c["articles"]}))
+            link = c.get("url", a["link"])
+            title = a["title"].replace("[", "\\[").replace("]", "\\]")
+            lines.append(f"{i}. **[{title}]({link})** — _{src_txt}_")
+            if c.get("summary"):
+                lines.append(f"   > {c['summary']}")
+        lines.append("")
+    return "\n".join(lines)[:60000]
+
+
 # ───────────────────────── 발송 ─────────────────────────
+def send_github_issue(md_body: str):
+    """GitHub 이슈로 올림 → GitHub가 계정 이메일로 알림 메일을 보내줌 (외부 서비스 불필요)."""
+    token = os.getenv("GITHUB_TOKEN")
+    repo = os.getenv("GITHUB_REPOSITORY")
+    if not (token and repo):
+        print("[GitHub 이슈 미발송] GITHUB_TOKEN/GITHUB_REPOSITORY 없음")
+        return False
+    headers = {"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"}
+    try:
+        r = requests.post(f"https://api.github.com/repos/{repo}/issues", headers=headers, timeout=30,
+                          json={"title": f"[브리핑] 보험·의료 뉴스 {datetime.now(KST):%Y-%m-%d}",
+                                "body": md_body})
+        if r.status_code != 201:
+            print(f"[GitHub 이슈 실패] {r.status_code} {r.text[:300]}")
+            return False
+        num = r.json()["number"]
+        print(f"[GitHub 이슈 생성 완료] #{num} → 알림 메일이 계정 이메일로 발송됩니다")
+        # 이슈가 쌓이지 않도록 바로 닫기 (알림 메일은 생성 시점에 이미 발송됨)
+        requests.patch(f"https://api.github.com/repos/{repo}/issues/{num}", headers=headers,
+                       json={"state": "closed"}, timeout=30)
+        return True
+    except Exception as ex:
+        print(f"[GitHub 이슈 실패] {ex}")
+        return False
 def send_telegram(text: str):
     token, chat = os.getenv("TELEGRAM_BOT_TOKEN"), os.getenv("TELEGRAM_CHAT_ID")
     if not (token and chat):
@@ -281,6 +324,37 @@ def send_telegram(text: str):
         requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
                       data={"chat_id": chat, "text": ch, "disable_web_page_preview": True}, timeout=20)
     return True
+
+
+def send_resend(html_body: str, text_body: str):
+    """Resend(무료) HTTPS API로 발송. SMTP 포트가 막힌 환경에서도 동작."""
+    key = (os.getenv("RESEND_API_KEY") or "").strip()
+    to = (os.getenv("MAIL_TO") or "").strip()
+    if not key:
+        return False
+    if not to:
+        print("[Resend 미발송] MAIL_TO가 비어 있습니다.")
+        return False
+    try:
+        r = requests.post(
+            "https://api.resend.com/emails",
+            headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+            json={
+                "from": "News Briefing <onboarding@resend.dev>",
+                "to": [x.strip() for x in to.split(",") if x.strip()],
+                "subject": f"[브리핑] 보험·의료 뉴스 {datetime.now(KST):%Y-%m-%d}",
+                "html": html_body,
+                "text": text_body,
+            },
+            timeout=30,
+        )
+        if r.status_code in (200, 201):
+            print(f"[Resend 발송 완료] → {to}")
+            return True
+        print(f"[Resend 발송 실패] {r.status_code} {r.text[:300]}")
+    except Exception as ex:
+        print(f"[Resend 발송 실패] {ex}")
+    return False
 
 
 def send_email(html_body: str, text_body: str):
@@ -369,7 +443,13 @@ def main():
     print("\n" + text_body)
     if args.dry_run:
         return
-    sent = [send_telegram(text_body), send_email(html_body, text_body)]
+    sent = [send_telegram(text_body)]
+    if os.getenv("GITHUB_ISSUE") == "1":
+        sent.append(send_github_issue(build_markdown(sections)))
+    elif os.getenv("RESEND_API_KEY"):
+        sent.append(send_resend(html_body, text_body))
+    else:
+        sent.append(send_email(html_body, text_body))
     if not any(sent):
         print("발송되지 않아 briefing.html만 저장했습니다.")
 
