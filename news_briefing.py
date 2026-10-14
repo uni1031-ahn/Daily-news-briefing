@@ -32,7 +32,7 @@ import requests
 # ───────────────────────── 설정 ─────────────────────────
 TOP_N = int(os.getenv("TOP_N", "10") or "10")      # 분야별 상위 기사 수 (10 또는 20)
 HOURS = int(os.getenv("HOURS", "24") or "24")      # 최근 몇 시간 기사 수집
-SIM_THRESHOLD = 0.62                               # 제목 유사도 기준(0~1)
+SIM_THRESHOLD = 0.8                                # 제목 유사도 기준(0~1)
 
 SOURCES = {
     "보험": {
@@ -158,18 +158,38 @@ def norm(t: str) -> str:
     return re.sub(r"\s+", " ", t).strip().lower()
 
 
+def tokens(title: str) -> set:
+    return {w for w in norm(title).split() if len(w) >= 2}
+
+
+def similar(n1, t1, n2, t2) -> bool:
+    """같은 이슈의 기사인지 판단: (1) 문자열 유사도  (2) 핵심 단어 겹침."""
+    if n1 == n2 or difflib.SequenceMatcher(None, n1, n2).ratio() >= SIM_THRESHOLD:
+        return True
+    common = t1 & t2
+    if not common:
+        return False
+    overlap = len(common) / min(len(t1), len(t2))
+    long_common = any(len(w) >= 6 for w in common)      # 상품명·고유명사처럼 긴 공통 단어
+    # 상품명·고유명사처럼 긴 공통 단어가 있고, 공통 단어가 3개 이상일 때만 같은 이슈로 판단
+    return len(common) >= 3 and overlap >= 0.6 and long_common
+
+
 def cluster(items):
+    """제목이 같거나 같은 이슈로 보이는 기사를 하나로 병합."""
     clusters = []
     for it in sorted(items, key=lambda x: x["pub"] or EPOCH, reverse=True):
         n = norm(it["title"])
         if not n:
             continue
+        tk = tokens(it["title"])
         for c in clusters:
-            if n == c["norm"] or difflib.SequenceMatcher(None, n, c["norm"]).ratio() >= SIM_THRESHOLD:
+            if any(similar(n, tk, m, tm) for m, tm in c["keys"]):
                 c["articles"].append(it)
+                c["keys"].append((n, tk))
                 break
         else:
-            clusters.append({"norm": n, "articles": [it]})
+            clusters.append({"norm": n, "keys": [(n, tk)], "articles": [it]})
     return clusters
 
 
@@ -260,9 +280,22 @@ def fetch_body(url: str) -> str:
         return ""
 
 
+BOILERPLATE = ["글씨 크기", "글자 크기", "크기로 변경", "본문 내용은", "기사 공유", "무단전재", "무단 전재",
+               "저작권", "ⓒ", "구독", "카카오톡", "페이스북", "스크랩", "프린트", "URL 복사", "URL복사",
+               "공유하기", "기사입력", "기사 입력", "좋아요", "댓글", "광고 문의", "로그인", "회원가입"]
+
+
+def clean_text(text: str) -> str:
+    """기사 본문에서 '글씨 크기 설정' 같은 사이트 공통 문구를 제거."""
+    lines = [ln for ln in (text or "").splitlines()
+             if ln.strip() and not any(b in ln for b in BOILERPLATE)]
+    return "\n".join(lines)
+
+
 def extractive_summary(text: str, n=2, max_chars=240) -> str:
+    text = clean_text(text)
     sents = re.split(r"(?<=[.!?다])\s+", text.replace("\n", " "))
-    sents = [s.strip() for s in sents if len(s.strip()) > 25]
+    sents = [s.strip() for s in sents if len(s.strip()) > 15 and not any(b in s for b in BOILERPLATE)]
     return " ".join(sents[:n])[:max_chars].strip()
 
 
@@ -288,8 +321,8 @@ def summarize(cl):
     url = resolve_url(a["link"])
     cl["url"] = url
     desc = next((x["desc"] for x in arts if len(x.get("desc", "")) > 30), "")
-    body = fetch_body(url) or desc
-    cl["summary"] = gemini_summary(a["title"], body) or extractive_summary(body) or desc[:240]
+    body = clean_text(fetch_body(url)) or clean_text(desc)
+    cl["summary"] = gemini_summary(a["title"], body) or extractive_summary(body) or clean_text(desc)[:240]
     time.sleep(1)
 
 
