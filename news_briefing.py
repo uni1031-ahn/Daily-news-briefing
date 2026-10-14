@@ -163,15 +163,22 @@ def tokens(title: str) -> set:
 
 
 def similar(n1, t1, n2, t2) -> bool:
-    """같은 이슈의 기사인지 판단: (1) 문자열 유사도  (2) 핵심 단어 겹침."""
-    if n1 == n2 or difflib.SequenceMatcher(None, n1, n2).ratio() >= SIM_THRESHOLD:
+    """같은 이슈의 기사인지 판단: (0) 회사명 확인 (1) 문자열 유사도 (2) 핵심 단어 겹침."""
+    if n1 == n2:
+        return True
+    # 제목 맨 앞 회사명이 서로 다르면(예: 삼성생명 vs 한화생명) 다른 이슈로 판단
+    co_suffix = ("생명", "화재", "손보", "생보", "해상", "라이프", "은행", "카드", "증권", "캐피탈", "금융", "보험")
+    f1, f2 = n1.split()[0], n2.split()[0]
+    if f1 != f2 and f1.endswith(co_suffix) and f2.endswith(co_suffix):
+        return False
+    if difflib.SequenceMatcher(None, n1, n2).ratio() >= SIM_THRESHOLD:
         return True
     common = t1 & t2
     if not common:
         return False
     overlap = len(common) / min(len(t1), len(t2))
     long_common = any(len(w) >= 6 for w in common)      # 상품명·고유명사처럼 긴 공통 단어
-    # 상품명·고유명사처럼 긴 공통 단어가 있고, 공통 단어가 3개 이상일 때만 같은 이슈로 판단
+    # 긴 공통 단어가 있고, 공통 단어가 3개 이상일 때만 같은 이슈로 판단
     return len(common) >= 3 and overlap >= 0.6 and long_common
 
 
@@ -280,16 +287,24 @@ def fetch_body(url: str) -> str:
         return ""
 
 
-BOILERPLATE = ["글씨 크기", "글자 크기", "크기로 변경", "본문 내용은", "기사 공유", "무단전재", "무단 전재",
-               "저작권", "ⓒ", "구독", "카카오톡", "페이스북", "스크랩", "프린트", "URL 복사", "URL복사",
-               "공유하기", "기사입력", "기사 입력", "좋아요", "댓글", "광고 문의", "로그인", "회원가입"]
+BOILERPLATE = ["글씨 크기", "글씨크기", "글자 크기", "글자크기", "크기 설정", "크기로 변경", "본문 내용은",
+               "기사 공유", "무단전재", "무단 전재", "저작권", "ⓒ", "구독", "카카오톡", "페이스북",
+               "스크랩", "프린트", "URL 복사", "URL복사", "공유하기", "기사입력", "기사 입력",
+               "좋아요", "댓글", "광고 문의", "로그인", "회원가입"]
 
 
 def clean_text(text: str) -> str:
-    """기사 본문에서 '글씨 크기 설정' 같은 사이트 공통 문구를 제거."""
-    lines = [ln for ln in (text or "").splitlines()
-             if ln.strip() and not any(b in ln for b in BOILERPLATE)]
-    return "\n".join(lines)
+    """기사 본문에서 '글자크기 설정' 같은 사이트 공통 문구가 든 문장만 제거."""
+    out = []
+    for ln in (text or "").splitlines():
+        ln = ln.strip()
+        if not ln:
+            continue
+        sents = re.split(r"(?<=[.!?다])\s+", ln)
+        kept = [x for x in sents if not any(b in x for b in BOILERPLATE)]
+        if kept:
+            out.append(" ".join(kept))
+    return "\n".join(out)
 
 
 def extractive_summary(text: str, n=2, max_chars=240) -> str:
