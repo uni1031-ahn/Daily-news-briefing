@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 """
-보험/의료 뉴스 일일 브리핑 v2 (무료 도구만 사용)
+보험/의료 뉴스 일일 브리핑 v3 (무료 도구만 사용)
+
+v3 변경점
+ - 분류별 리스팅: 기사 페이지의 '신문사 자체 섹션'(메타태그/브레드크럼/RSS 카테고리)을 읽어
+   GA·상품·정책 등 통합 카테고리로 묶고, 카테고리마다 화제성 상위 N건을 보여줌 (LAYOUT=category)
+ - 섹션을 못 읽은 기사는 제목 키워드로 '자동분류' (메일에 표시됨)
+ - 공모전·봉사·콘서트·[포토]·[인사] 같은 홍보/단신성 제목 제외
+ - --sections : 신문사별 원본 섹션명을 집계해 보여주는 진단 모드 (분류표 튜닝용)
 
 v2 변경점
  - 신문사 자체 RSS(/rss/allArticle.xml)를 먼저 시도 → 직접 링크 + 기사 요약문 확보
@@ -14,6 +21,8 @@ v2 변경점
   python news_briefing.py              # 실제 발송
 """
 import argparse
+import collections
+import concurrent.futures
 import difflib
 import html
 import os
@@ -33,6 +42,8 @@ import requests
 TOP_N = int(os.getenv("TOP_N", "10") or "10")      # 분야별 상위 기사 수 (10 또는 20)
 HOURS = int(os.getenv("HOURS", "24") or "24")      # 최근 몇 시간 기사 수집
 SIM_THRESHOLD = 0.8                                # 제목 유사도 기준(0~1)
+LAYOUT = (os.getenv("LAYOUT", "category") or "category").strip()   # category | buzz_recent
+PER_CATEGORY = int(os.getenv("PER_CATEGORY", "5") or "5")          # 카테고리별 표시 건수
 
 SOURCES = {
     "보험": {
@@ -71,6 +82,56 @@ INSURANCE_KEYWORDS = [
     "보장", "연금", "실손", "설계사", "GA", "언더라이팅", "재보험", "보험료", "IFRS17",
     "K-ICS", "지급여력", "삼성화재", "현대해상", "DB손보", "KB손보", "메리츠", "한화생명",
     "교보", "신한라이프", "농협생명", "농협손보", "라이나", "동양생명", "흥국", "롯데손보",
+    "방카", "보험사",
+]
+
+# 제목에 아래 단어가 있는데 보험 키워드는 없는 기사는 보험 분야에서 제외 (은행·증권 홍보성 기사 등)
+NON_INSURANCE_HINTS = ["은행", "증권", "카드", "저축은행", "캐피탈", "코스피", "코스닥", "주가",
+                       "가상자산", "비트코인", "대출금리", "예금금리", "펀드"]
+
+
+def is_off_topic_insurance(title: str) -> bool:
+    """제목이 은행·증권 등 타 업권 중심이고 보험 관련 단어가 없으면 True."""
+    if any(k in title for k in INSURANCE_KEYWORDS):
+        return False
+    return any(h in title for h in NON_INSURANCE_HINTS)
+
+# ───────────── 분류표 (순서대로 검사, 먼저 맞는 카테고리로 분류) ─────────────
+# 신문사 섹션명(예: "보험상품", "GA", "정책/제도")과 기사 제목 둘 다에 같은 키워드를 적용합니다.
+# 실제 섹션명을 --sections 로 확인한 뒤 키워드를 추가/수정하세요.
+CATEGORY_MAP = {
+    "보험": [
+        ("정책·감독", ["정책", "제도", "금융당국", "금감원", "금융감독원", "금융위", "보험업법", "규제", "감독",
+                    "법안", "개정안", "국회", "국정감사", "국감", "제재", "과징금", "시행령", "가이드라인", "당국"]),
+        ("GA·판매채널", ["GA", "법인보험대리점", "대리점", "설계사", "판매채널", "방카", "판매조직", "제판분리", "모집"]),
+        ("상품·신상품", ["상품", "신상품", "특약", "출시", "실손", "펫보험", "종신", "암보험", "어린이보험",
+                     "운전자보험", "건강보험", "연금보험", "저축보험", "변액", "치아보험", "간병"]),
+        ("경영·실적", ["실적", "순이익", "당기순", "지급여력", "K-ICS", "킥스", "IFRS17", "인수", "M&A", "합병",
+                    "지분", "CEO", "사장", "경영", "손해율", "적자", "흑자", "신용등급", "자본", "배당", "주가"]),
+        ("디지털·AI", ["AI", "인공지능", "디지털", "인슈어테크", "플랫폼", "데이터", "챗봇", "빅데이터", "자동화", "핀테크"]),
+        ("소비자·분쟁", ["민원", "분쟁", "소송", "판결", "대법원", "불완전판매", "소비자", "피해", "보험금",
+                     "지급거절", "조정", "사기"]),
+        ("보험사 동향", ["생보", "손보", "생명", "손해보험", "화재", "보험사", "보험업계", "보험업"]),
+    ],
+    "의료": [
+        ("정책·제도", ["정책", "제도", "복지부", "의료법", "법안", "국회", "국감", "국정감사", "건보", "건강보험",
+                    "수가", "심평원", "급여", "식약처", "시행", "개정", "의료개혁", "필수의료", "공공의료", "지역의료"]),
+        ("의료계·단체", ["의협", "의사회", "대한의사", "전공의", "의대생", "의정", "의료계", "병협", "협회",
+                     "집단", "파업", "사직", "증원"]),
+        ("제약·바이오", ["제약", "바이오", "신약", "약가", "백신", "의약품", "품목허가", "임상시험", "임상3상",
+                     "치료제", "제네릭", "CMO", "CDMO"]),
+        ("의료기기·디지털헬스", ["의료기기", "디지털헬스", "AI", "인공지능", "원격", "헬스케어", "웨어러블",
+                         "로봇수술", "스마트병원"]),
+        ("병원·의료기관", ["병원", "의료원", "의원", "개원", "협진", "수술", "진료", "의료기관", "상급종합", "센터"]),
+        ("학술·학회", ["학회", "학술", "논문", "연구", "세미나", "심포지엄", "학술대회", "저널"]),
+    ],
+}
+
+# 제목에 아래 문구가 있으면 제외 (홍보·동정·단신성 기사). 필요하면 추가/삭제하세요.
+EXCLUDE_TITLE_PATTERNS = [
+    "[포토]", "[사진]", "[부고]", "[부음]", "[인사]", "[동정]", "[게시판]", "[알림]", "[화보]", "[광고]",
+    "[카드뉴스]", "[오늘의", "공모전", "봉사활동", "봉사 활동", "후원금", "기부금", "콘서트", "장학금",
+    "골프대회", "체육대회", "송년회",
 ]
 
 KST = timezone(timedelta(hours=9))
@@ -110,6 +171,7 @@ def fetch_direct(name: str, domain: str, cutoff):
                     "pub": pub,
                     "desc": strip_html(e.get("summary", "") or e.get("description", "")),
                     "direct": True,
+                    "cat_raw": [strip_html(t.get("term", "")) for t in (e.get("tags") or []) if t.get("term")],
                 })
             if items:
                 return items
@@ -262,6 +324,172 @@ def rank(clusters, top_n, field=""):
     return buzz_top, recent_top
 
 
+# ───────────────────────── 분류 (신문사 자체 섹션) ─────────────────────────
+PAGE_CACHE = {}
+
+
+def get_page(url: str) -> str:
+    """기사 페이지 HTML (캐시). 인코딩(EUC-KR 등)을 직접 판별."""
+    if url in PAGE_CACHE:
+        return PAGE_CACHE[url]
+    text = ""
+    try:
+        r = requests.get(url, headers=UA, timeout=12)
+        if r.status_code == 200:
+            raw = r.content
+            m = re.search(rb"charset=[\"']?([A-Za-z0-9_\-]+)", raw[:4000])
+            enc = m.group(1).decode("ascii", "ignore") if m else (r.encoding or "utf-8")
+            try:
+                text = raw.decode(enc, errors="replace")
+            except LookupError:
+                text = raw.decode("utf-8", errors="replace")
+    except Exception:
+        text = ""
+    PAGE_CACHE[url] = text
+    return text
+
+
+GENERIC_LABELS = {"홈", "home", "뉴스", "news", "기사", "전체", "all", "article", "신문"}
+
+
+def extract_sections(page: str):
+    """기사 페이지에서 신문사 자체 섹션명 후보를 추출 (메타태그 → JSON-LD → 브레드크럼 순)."""
+    labels = []
+    head = page[:80000]
+    for m in re.finditer(r"<meta\s[^>]*>", head, flags=re.I):
+        tag = m.group(0)
+        k = re.search(r"(?:property|name)\s*=\s*[\"']([^\"']+)[\"']", tag, re.I)
+        v = re.search(r"content\s*=\s*[\"']([^\"']*)[\"']", tag, re.I)
+        if k and v and k.group(1).strip().lower() in (
+                "article:section", "og:article:section", "article:section2", "section", "category"):
+            labels.append(html.unescape(v.group(1)).strip())
+    for m in re.finditer(r'"articleSection"\s*:\s*(\[[^\]]*\]|"[^"]*")', page[:200000]):
+        labels += [html.unescape(x).strip() for x in re.findall(r'"([^"]+)"', m.group(1))]
+    if not labels:
+        m = re.search(
+            r"<(?:ul|ol|div|nav|p|span|h\d)[^>]*class=[\"'][^\"']*(?:breadcrumb|article-category|view-category|"
+            r"cate-name|sec-name|section-name)[^\"']*[\"'][^>]*>(.{0,400}?)</(?:ul|ol|div|nav|p|span|h\d)>",
+            page[:200000], flags=re.I | re.S)
+        if m:
+            parts = [x.strip() for x in re.split(r"[>›»|/]", strip_html(m.group(1))) if x.strip()]
+            parts = [x for x in parts if x.lower() not in GENERIC_LABELS]
+            if parts and len(parts[-1]) <= 15:
+                labels.append(parts[-1])
+    out = []
+    for lab in labels:
+        if lab and len(lab) <= 30 and lab.lower() not in GENERIC_LABELS and lab not in out:
+            out.append(lab)
+    return out[:3]
+
+
+def classify(raw_labels, title: str, field: str):
+    """(카테고리, 근거) 반환. 근거: '섹션'=신문사 분류 사용, '키워드'=제목 자동분류, '없음'."""
+    rules = CATEGORY_MAP.get(field, [])
+    for lab in raw_labels:
+        lab_u = lab.upper()
+        for cat, keys in rules:
+            if any(k.upper() in lab_u for k in keys):
+                return cat, "섹션", lab
+    for cat, keys in rules:
+        if any(k in title for k in keys):
+            return cat, "키워드", ""
+    return "기타", "없음", ""
+
+
+def filter_excluded(items):
+    kept = [it for it in items if not any(p in it["title"] for p in EXCLUDE_TITLE_PATTERNS)]
+    return kept, len(items) - len(kept)
+
+
+def assign_categories(clusters, field):
+    """클러스터마다 기사 페이지의 섹션명을 읽어 카테고리를 정함 (대표 기사 페이지만 조회)."""
+    todo = []
+    for c in clusters:
+        arts = sorted(c["articles"], key=lambda a: not a.get("direct"))
+        c["articles"] = arts
+        a = arts[0]
+        if a.get("direct") and not a.get("cat_raw") and a.get("link"):
+            todo.append(a)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as ex:
+        list(ex.map(lambda a: get_page(a["link"]), todo))
+    for a in todo:
+        a["sec_raw"] = extract_sections(PAGE_CACHE.get(a["link"], ""))
+
+    for c in clusters:
+        votes = collections.Counter()
+        how_by_cat, label_by_cat = {}, {}
+        for a in c["articles"]:
+            labels = a.get("cat_raw") or a.get("sec_raw") or []
+            cat, how, lab = classify(labels, a["title"], field)
+            votes[cat] += 2 if how == "섹션" else (1 if how == "키워드" else 0)
+            if how == "섹션" or cat not in how_by_cat:
+                how_by_cat[cat], label_by_cat[cat] = how, lab
+        if votes and votes.most_common(1)[0][1] > 0:
+            cat = votes.most_common(1)[0][0]
+        else:
+            cat = "기타"
+        c["cat"], c["cat_how"], c["cat_label"] = cat, how_by_cat.get(cat, "없음"), label_by_cat.get(cat, "")
+
+
+def _newest(c):
+    return max((a["pub"] for a in c["articles"] if a["pub"]), default=EPOCH)
+
+
+def _base(c):
+    srcs = {a["source"] for a in c["articles"]}
+    return len(srcs) * 3 + min(len(c["articles"]), 6) * 0.5
+
+
+def select_by_category(clusters, field, per_cat):
+    """카테고리별로 화제성 점수 상위 per_cat건 선정. 반환: [(카테고리, [클러스터...]), ...]"""
+    use_buzz = os.getenv("USE_EXTERNAL_BUZZ", "1") != "0"
+    kws = IMPORTANT_KEYWORDS.get(field, [])
+    buckets = collections.defaultdict(list)
+    for c in clusters:
+        buckets[c["cat"]].append(c)
+    order = [cat for cat, _ in CATEGORY_MAP.get(field, [])] + ["기타"]
+    result = []
+    for cat in order:
+        lst = buckets.get(cat, [])
+        if not lst:
+            continue
+        cand = sorted(lst, key=lambda c: (_base(c), _newest(c)), reverse=True)[: per_cat * 2]
+        for c in cand:
+            title = c["articles"][0]["title"]
+            c["buzz"] = external_buzz(title) if use_buzz else 0
+            if use_buzz:
+                time.sleep(0.7)
+            hit = sum(1 for k in kws if k in title)
+            c["score"] = _base(c) + min(c["buzz"], 15) * 1.0 + min(hit, 2) * 1.5
+        top = sorted(cand, key=lambda c: (c["score"], _newest(c)), reverse=True)[:per_cat]
+        result.append((cat, top))
+    return result
+
+
+def print_diagnostics(field, items, clusters):
+    """신문사별 원본 섹션명 집계 + 분류 결과 요약 (분류표 튜닝용 로그)."""
+    per_src = collections.defaultdict(collections.Counter)
+    total = collections.Counter()
+    got = collections.Counter()
+    for c in clusters:
+        for a in c["articles"]:
+            labs = a.get("cat_raw") or a.get("sec_raw")
+            if labs is None:
+                continue
+            total[a["source"]] += 1
+            if labs:
+                got[a["source"]] += 1
+                for lab in labs:
+                    per_src[a["source"]][lab] += 1
+    print(f"[섹션진단:{field}] 신문사별 원본 섹션명 (섹션 확보 기사/조회 기사)")
+    for src in sorted(total):
+        top = ", ".join(f"{k}×{v}" for k, v in per_src[src].most_common(8)) or "(섹션명 없음)"
+        print(f"   - {src}: {got[src]}/{total[src]} · {top}")
+    cnt = collections.Counter((c["cat"], c["cat_how"]) for c in clusters)
+    line = ", ".join(f"{cat}({how}){n}" for (cat, how), n in sorted(cnt.items()))
+    print(f"[분류결과:{field}] {line}")
+
+
 # ───────────────────────── 요약 ─────────────────────────
 def resolve_url(link: str) -> str:
     if "news.google.com" not in link:
@@ -279,10 +507,12 @@ def resolve_url(link: str) -> str:
 def fetch_body(url: str) -> str:
     if "news.google.com" in url:
         return ""
+    page = get_page(url)
+    if not page:
+        return ""
     try:
         import trafilatura
-        r = requests.get(url, headers=UA, timeout=15)
-        return trafilatura.extract(r.text) or ""
+        return trafilatura.extract(page) or ""
     except Exception:
         return ""
 
@@ -347,13 +577,17 @@ def build(sections):
     text_lines = [f"📰 보험·의료 뉴스 브리핑 {today}\n"]
     html_parts = [f"<h2>📰 보험·의료 뉴스 브리핑 {today}</h2>"]
     for field, top in sections.items():
-        text_lines.append(f"━━ {field} TOP {len(top)} ━━")
-        html_parts.append(f"<h3>{field} TOP {len(top)}</h3><ol>")
+        text_lines.append(f"━━ {field} ({len(top)}건) ━━")
+        html_parts.append(f"<h3>{field} ({len(top)}건)</h3><ol>")
         for i, c in enumerate(top, 1):
             a = c["articles"][0]
             src_txt = ", ".join(sorted({x["source"] for x in c["articles"]}))
             if c.get("buzz"):
                 src_txt += f" · 🔥관련보도 {c['buzz']}곳"
+            if c.get("cat_how") == "섹션" and c.get("cat_label"):
+                src_txt += f" · 📂{c['cat_label']}"
+            elif c.get("cat_how") == "키워드":
+                src_txt += " · 자동분류"
             link = c.get("url", a["link"])
             text_lines.append(f"{i}. {a['title']}  [{src_txt}]")
             if c.get("summary"):
@@ -375,12 +609,16 @@ def build_markdown(sections):
     lines = [f"@{owner} 오늘의 보험·의료 뉴스 브리핑입니다 ({today})\n" if owner
              else f"오늘의 보험·의료 뉴스 브리핑입니다 ({today})\n"]
     for field, top in sections.items():
-        lines.append(f"## {field} TOP {len(top)}\n")
+        lines.append(f"## {field} ({len(top)}건)\n")
         for i, c in enumerate(top, 1):
             a = c["articles"][0]
             src_txt = ", ".join(sorted({x["source"] for x in c["articles"]}))
             if c.get("buzz"):
                 src_txt += f" · 🔥관련보도 {c['buzz']}곳"
+            if c.get("cat_how") == "섹션" and c.get("cat_label"):
+                src_txt += f" · 📂{c['cat_label']}"
+            elif c.get("cat_how") == "키워드":
+                src_txt += " · 자동분류"
             link = c.get("url", a["link"])
             title = a["title"].replace("[", "\\[").replace("]", "\\]")
             lines.append(f"{i}. **[{title}]({link})** — _{src_txt}_")
@@ -408,13 +646,16 @@ def send_github_issue(md_body: str):
             return False
         num = r.json()["number"]
         print(f"[GitHub 이슈 생성 완료] #{num} → 알림 메일이 계정 이메일로 발송됩니다")
-        # 이슈가 쌓이지 않도록 바로 닫기 (알림 메일은 생성 시점에 이미 발송됨)
-        requests.patch(f"https://api.github.com/repos/{repo}/issues/{num}", headers=headers,
-                       json={"state": "closed"}, timeout=30)
+        # 닫으면 GitHub가 "Closed #N as completed" 알림 메일을 한 통 더 보내므로 기본은 닫지 않음
+        if os.getenv("GITHUB_ISSUE_CLOSE") == "1":
+            requests.patch(f"https://api.github.com/repos/{repo}/issues/{num}", headers=headers,
+                           json={"state": "closed"}, timeout=30)
         return True
     except Exception as ex:
         print(f"[GitHub 이슈 실패] {ex}")
         return False
+
+
 def send_telegram(text: str):
     token, chat = os.getenv("TELEGRAM_BOT_TOKEN"), os.getenv("TELEGRAM_CHAT_ID")
     if not (token and chat):
@@ -507,43 +748,79 @@ def send_email(html_body: str, text_body: str):
 
 
 # ───────────────────────── main ─────────────────────────
+def collect_field(field, srcs):
+    items, excluded = [], 0
+    for name, domain in srcs.items():
+        try:
+            got, how = fetch_source(name, domain, HOURS)
+        except Exception as ex:
+            print(f"[오류] {name}: {ex}", file=sys.stderr)
+            got, how = [], "오류"
+        note = ""
+        if field == "보험" and name in GENERAL_FINANCE:
+            before = len(got)
+            got = [g for g in got if any(k in (g["title"] + " " + g.get("desc", "")) for k in INSURANCE_KEYWORDS)]
+            note = f" (보험 관련만 {len(got)}/{before})"
+        if field == "보험":
+            before = len(got)
+            got = [g for g in got if not is_off_topic_insurance(g["title"])]
+            if before != len(got):
+                note += f" (타 업권 기사 {before - len(got)}건 제외)"
+        got, ex_n = filter_excluded(got)
+        excluded += ex_n
+        print(f"[{field}] {name:<10} ({domain}): {len(got)}건 · {how}{note}")
+        items += got
+        time.sleep(0.5)
+    return items, excluded
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true", help="신문사별 수집 건수만 출력")
+    ap.add_argument("--sections", action="store_true", help="신문사별 원본 섹션명 진단만 출력(발송 안 함)")
     ap.add_argument("--dry-run", action="store_true", help="발송하지 않음")
     args = ap.parse_args()
 
     sections = {}
     for field, srcs in SOURCES.items():
-        items = []
-        for name, domain in srcs.items():
-            try:
-                got, how = fetch_source(name, domain, HOURS)
-            except Exception as ex:
-                print(f"[오류] {name}: {ex}", file=sys.stderr)
-                got, how = [], "오류"
-            if field == "보험" and name in GENERAL_FINANCE:
-                before = len(got)
-                got = [g for g in got if any(k in (g["title"] + " " + g.get("desc", "")) for k in INSURANCE_KEYWORDS)]
-                note = f" (보험 관련만 {len(got)}/{before})"
-            else:
-                note = ""
-            print(f"[{field}] {name:<10} ({domain}): {len(got)}건 · {how}{note}")
-            items += got
-            time.sleep(0.5)
+        items, excluded = collect_field(field, srcs)
         if args.check:
             continue
-        buzz_top, recent_top = rank(cluster(items), TOP_N, field)
-        for c in buzz_top + recent_top:
-            summarize(c)
-        ok = sum(1 for c in buzz_top + recent_top if c.get("summary"))
-        print(f"[{field}] 요약 성공 {ok}/{len(buzz_top) + len(recent_top)}")
-        if buzz_top:
-            sections[f"{field} 화제성"] = buzz_top
-        if recent_top:
-            sections[f"{field} 최신"] = recent_top
+        if excluded:
+            print(f"[{field}] 홍보·단신성 제목 제외 {excluded}건")
+        clusters = cluster(items)
+        print(f"[{field}] 중복 병합 후 {len(clusters)}개 이슈 (기사 {len(items)}건)")
+
+        if LAYOUT == "category" or args.sections:
+            assign_categories(clusters, field)
+            print_diagnostics(field, items, clusters)
+            if args.sections:
+                continue
+            selected = select_by_category(clusters, field, PER_CATEGORY)
+            chosen = [c for _, top in selected for c in top]
+            for c in chosen:
+                summarize(c)
+            ok = sum(1 for c in chosen if c.get("summary"))
+            print(f"[{field}] 요약 성공 {ok}/{len(chosen)}")
+            for cat, top in selected:
+                sections[f"{field} · {cat}"] = top
+        else:
+            buzz_top, recent_top = rank(clusters, TOP_N, field)
+            for c in buzz_top + recent_top:
+                summarize(c)
+            ok = sum(1 for c in buzz_top + recent_top if c.get("summary"))
+            print(f"[{field}] 요약 성공 {ok}/{len(buzz_top) + len(recent_top)}")
+            if buzz_top:
+                sections[f"{field} 화제성"] = buzz_top
+            if recent_top:
+                sections[f"{field} 최신"] = recent_top
+
     if args.check:
         print("\n'수집실패'인 신문사는 SOURCES의 도메인을 확인해 수정하세요.")
+        return
+    if args.sections:
+        print("\n섹션명이 '(섹션명 없음)'인 신문사는 키워드 자동분류가 적용됩니다. "
+              "위 섹션명을 보고 CATEGORY_MAP 키워드를 보강하세요.")
         return
 
     text_body, html_body = build(sections)
