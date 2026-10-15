@@ -44,6 +44,9 @@ HOURS = int(os.getenv("HOURS", "24") or "24")      # 최근 몇 시간 기사 �
 SIM_THRESHOLD = 0.8                                # 제목 유사도 기준(0~1)
 LAYOUT = (os.getenv("LAYOUT", "category") or "category").strip()   # category | buzz_recent
 PER_CATEGORY = int(os.getenv("PER_CATEGORY", "5") or "5")          # 카테고리별 표시 건수
+SUMMARY_CHARS = int(os.getenv("SUMMARY_CHARS", "130") or "130")    # 요약문 최대 글자 수 (줄이면 메일이 촘촘해짐)
+ROW_PAD = int(os.getenv("ROW_PAD", "4") or "4")                    # 표 행의 위아래 여백(px). 작을수록 촘촘함
+BUILD = "v3.4-compact2"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
 
 SOURCES = {
     "보험": {
@@ -554,12 +557,23 @@ def gemini_summary(title: str, text: str) -> str:
     try:
         url = ("https://generativelanguage.googleapis.com/v1beta/models/"
                f"gemini-2.0-flash:generateContent?key={key}")
-        prompt = (f"다음 기사를 한국어로 2문장 이내(150자 내외)로 핵심만 요약해줘. "
+        prompt = (f"다음 기사를 한국어로 1~2문장(100자 내외)으로 핵심만 요약해줘. "
                   f"제목: {title}\n본문: {text[:4000]}")
         r = requests.post(url, json={"contents": [{"parts": [{"text": prompt}]}]}, timeout=30)
         return r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
     except Exception:
         return ""
+
+
+def shorten(text: str, n: int) -> str:
+    text = re.sub(r"\s+", " ", text or "").strip()
+    if len(text) <= n:
+        return text
+    cut = text[:n]
+    m = max(cut.rfind(". "), cut.rfind("다 "), cut.rfind(" "))
+    if m >= n * 0.6:
+        cut = cut[:m]
+    return cut.rstrip(" ,.·") + "…"
 
 
 def summarize(cl):
@@ -570,7 +584,9 @@ def summarize(cl):
     cl["url"] = url
     desc = next((x["desc"] for x in arts if len(x.get("desc", "")) > 30), "")
     body = clean_text(fetch_body(url)) or clean_text(desc)
-    cl["summary"] = gemini_summary(a["title"], body) or extractive_summary(body) or clean_text(desc)[:240]
+    cl["summary"] = shorten(
+        gemini_summary(a["title"], body) or extractive_summary(body, max_chars=400) or clean_text(desc),
+        SUMMARY_CHARS)
     time.sleep(1)
 
 
@@ -656,7 +672,7 @@ def build_email_html(sections) -> str:
         "<div style='font-size:21px;font-weight:bold;'>📰 보험·의료 뉴스 브리핑</div>"
         f"<div style='font-size:13px;color:#cfd9e8;margin-top:6px;'>{now:%Y.%m.%d} ({wd}) 기준 · {esc(count_txt)}</div>"
         "</td></tr>",
-        "<tr><td style='padding:16px 24px 4px;font-size:14px;color:#333;line-height:1.6;'>"
+        "<tr><td style='padding:12px 24px 2px;font-size:14px;color:#333;line-height:1.5;'>"
         "안녕하세요. 오늘의 보험·의료 주요 뉴스입니다. 기사 제목을 누르면 원문으로 이동합니다."
         "</td></tr>",
     ]
@@ -665,12 +681,12 @@ def build_email_html(sections) -> str:
         fld, cat = (key.split(" · ", 1) + [""])[:2] if " · " in key else (key, "")
         if fld != cur_field:
             out.append(
-                f"<tr><td style='padding:22px 24px 0;'><div style='font-size:18px;font-weight:bold;color:#1f3a5f;"
+                f"<tr><td style='padding:16px 24px 0;'><div style='font-size:18px;font-weight:bold;color:#1f3a5f;"
                 f"border-bottom:2px solid #1f3a5f;padding-bottom:8px;'>{esc(fld)}</div></td></tr>")
             cur_field = fld
         if cat:
             out.append(
-                f"<tr><td style='padding:16px 24px 6px;font-size:15px;font-weight:bold;color:#222;'>"
+                f"<tr><td style='padding:12px 24px 4px;font-size:15px;font-weight:bold;color:#222;'>"
                 f"▌{esc(cat)} <span style='font-weight:normal;color:#888;font-size:13px;'>({len(top)}건)</span></td></tr>")
         rows = []
         for i, c in enumerate(top, 1):
@@ -682,29 +698,29 @@ def build_email_html(sections) -> str:
                 meta.append(f"🔥관련보도 {c['buzz']}곳")
             if c.get("cat_how") == "섹션" and c.get("cat_label"):
                 meta.append("📂" + esc(c["cat_label"]))
-            summ = (f"<div style='font-size:13px;color:#444;margin-top:6px;line-height:1.6;'>{esc(c['summary'])}</div>"
+            summ = (f"<div style='font-size:12.5px;color:#444;margin-top:1px;line-height:1.35;'>{esc(c['summary'])}</div>"
                     if c.get("summary") else "")
             rows.append(
                 "<tr>"
-                f"<td align='center' valign='top' style='width:44px;padding:12px 4px;border:1px solid #dde2e8;"
-                f"font-size:14px;color:#555;'>{i}</td>"
-                "<td style='padding:12px 14px;border:1px solid #dde2e8;'>"
-                f"<a href='{esc(link, quote=True)}' style='font-size:15px;font-weight:bold;color:#1a56db;"
-                f"text-decoration:underline;line-height:1.5;'>{esc(a['title'])}</a>"
+                f"<td align='center' valign='top' style='width:36px;padding:{ROW_PAD}px 2px;border:1px solid #dde2e8;"
+                f"font-size:13px;line-height:1.3;color:#555;'>{i}</td>"
+                f"<td style='padding:{ROW_PAD}px 10px;border:1px solid #dde2e8;font-size:13px;line-height:1.3;'>"
+                f"<div style='font-size:14px;line-height:1.3;'><a href='{esc(link, quote=True)}' "
+                f"style='font-size:14px;font-weight:bold;color:#1a56db;text-decoration:underline;'>{esc(a['title'])}</a></div>"
                 f"{summ}"
-                f"<div style='font-size:12px;color:#888;margin-top:6px;'>{' · '.join(meta)}</div>"
+                f"<div style='font-size:11.5px;color:#888;margin-top:1px;line-height:1.25;'>{' · '.join(meta)}</div>"
                 "</td></tr>")
         out.append(
             "<tr><td style='padding:0 24px;'>"
             "<table width='100%' cellpadding='0' cellspacing='0' border='0' style='border-collapse:collapse;'>"
             "<tr style='background:#eef1f6;'>"
-            "<th style='width:44px;padding:8px;border:1px solid #dde2e8;font-size:13px;color:#333;'>No</th>"
-            "<th style='padding:8px;border:1px solid #dde2e8;font-size:13px;color:#333;'>기사</th></tr>"
+            "<th style='width:36px;padding:4px;border:1px solid #dde2e8;font-size:13px;color:#333;'>No</th>"
+            "<th style='padding:4px;border:1px solid #dde2e8;font-size:13px;color:#333;'>기사</th></tr>"
             + "".join(rows) + "</table></td></tr>")
     out.append(
-        "<tr><td style='padding:22px 24px;font-size:12px;color:#888;line-height:1.6;border-top:1px solid #eee;'>"
+        "<tr><td style='padding:14px 24px;font-size:12px;color:#888;line-height:1.5;border-top:1px solid #eee;'>"
         "이 메일은 자동으로 발송되었습니다. 요약문은 기사 본문 앞부분을 바탕으로 만들어져 원문과 다를 수 있으니 "
-        "중요한 내용은 원문을 확인하세요.</td></tr>")
+        "중요한 내용은 원문을 확인하세요. <span style='color:#bbb;'>[" + BUILD + "]</span></td></tr>")
     out.append("</table></td></tr></table></body></html>")
     return "".join(out)
 
