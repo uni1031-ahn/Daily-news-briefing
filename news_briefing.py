@@ -673,6 +673,36 @@ def send_telegram(text: str):
     return True
 
 
+def send_appsscript(subject: str, html_body: str, text_body: str) -> bool:
+    """내 구글 계정의 Apps Script(무료)를 통해 여러 명에게 동시 발송 (MAIL_TO에 쉼표로 여러 주소)."""
+    url = (os.getenv("APPS_SCRIPT_URL") or "").strip()
+    token = (os.getenv("APPS_SCRIPT_TOKEN") or "").strip()
+    to = [x.strip() for x in (os.getenv("MAIL_TO") or "").replace(";", ",").split(",") if x.strip()]
+    if not (url and token and to):
+        print("[Apps Script 미발송] APPS_SCRIPT_URL / APPS_SCRIPT_TOKEN / MAIL_TO 중 비어 있는 값이 있습니다.")
+        return False
+    wrapped = ("<div style=\"font-family:'Malgun Gothic',sans-serif;max-width:760px;line-height:1.5\">"
+               + html_body + "</div>")
+    try:
+        r = requests.post(url, json={"token": token, "to": to, "subject": subject,
+                                     "html": wrapped, "text": text_body},
+                          timeout=90, allow_redirects=True)
+        try:
+            res = r.json()
+        except Exception:
+            print(f"[Apps Script 실패] JSON 응답이 아님 (HTTP {r.status_code}). 배포 설정에서 "
+                  f"'액세스 권한: 모든 사용자'인지 확인하세요. 응답 일부: {r.text[:150]!r}")
+            return False
+        if res.get("ok"):
+            print(f"[Apps Script 발송 완료] {res.get('sent')}명 → {', '.join(to)}"
+                  + (f" (실패: {res.get('failed')})" if res.get("failed") else ""))
+            return True
+        print(f"[Apps Script 실패] {res}")
+    except Exception as ex:
+        print(f"[Apps Script 실패] {ex}")
+    return False
+
+
 def send_resend(html_body: str, text_body: str):
     """Resend(무료) HTTPS API로 발송. SMTP 포트가 막힌 환경에서도 동작."""
     key = (os.getenv("RESEND_API_KEY") or "").strip()
@@ -830,12 +860,18 @@ def main():
     if args.dry_run:
         return
     sent = [send_telegram(text_body)]
-    if os.getenv("GITHUB_ISSUE") == "1":
-        sent.append(send_github_issue(build_markdown(sections)))
-    elif os.getenv("RESEND_API_KEY"):
-        sent.append(send_resend(html_body, text_body))
-    else:
-        sent.append(send_email(html_body, text_body))
+    subject = f"[브리핑] 보험·의료 뉴스 {datetime.now(KST):%Y-%m-%d}"
+    delivered = False
+    if os.getenv("APPS_SCRIPT_URL"):
+        delivered = send_appsscript(subject, html_body, text_body)
+        sent.append(delivered)
+    if not delivered:      # Apps Script가 없거나 실패하면 기존 방식으로 대체 발송
+        if os.getenv("GITHUB_ISSUE") == "1":
+            sent.append(send_github_issue(build_markdown(sections)))
+        elif os.getenv("RESEND_API_KEY"):
+            sent.append(send_resend(html_body, text_body))
+        else:
+            sent.append(send_email(html_body, text_body))
     if not any(sent):
         print("발송되지 않아 briefing.html만 저장했습니다.")
 
