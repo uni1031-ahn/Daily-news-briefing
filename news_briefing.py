@@ -240,8 +240,11 @@ def similar(n1, t1, n2, t2) -> bool:
         return False
     overlap = len(common) / min(len(t1), len(t2))
     long_common = any(len(w) >= 6 for w in common)      # 상품명·고유명사처럼 긴 공통 단어
-    # 긴 공통 단어가 있고, 공통 단어가 3개 이상일 때만 같은 이슈로 판단
-    return len(common) >= 3 and overlap >= 0.6 and long_common
+    # (a) 상품명·고유명사처럼 긴 공통 단어가 있고 공통 단어가 3개 이상
+    if len(common) >= 3 and overlap >= 0.6 and long_common:
+        return True
+    # (b) 상품명을 한글/영문으로 달리 표기해 긴 공통 단어가 없어도, 공통 단어가 5개 이상이고 대부분 겹치면 같은 이슈
+    return len(common) >= 5 and overlap >= 0.7
 
 
 def cluster(items):
@@ -628,6 +631,84 @@ def build_markdown(sections):
     return "\n".join(lines)[:60000]
 
 
+def build_email_html(sections) -> str:
+    """이메일용 HTML (표 레이아웃 + 인라인 CSS: Gmail/네이버/Outlook 등에서 깨지지 않도록)."""
+    esc = html.escape
+    now = datetime.now(KST)
+    wd = "월화수목금토일"[now.weekday()]
+    # 분야별 건수 집계
+    counts = collections.OrderedDict()
+    for key, top in sections.items():
+        fld = key.split(" · ")[0] if " · " in key else key
+        counts[fld] = counts.get(fld, 0) + len(top)
+    count_txt = " · ".join(f"{f} {n}건" for f, n in counts.items())
+
+    font = "'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',Arial,sans-serif"
+    out = [
+        "<!DOCTYPE html><html lang='ko'><head><meta charset='utf-8'>",
+        "<meta name='viewport' content='width=device-width,initial-scale=1'></head>",
+        "<body style='margin:0;padding:0;background:#f4f6f8;'>",
+        "<table width='100%' cellpadding='0' cellspacing='0' border='0' style='background:#f4f6f8;'><tr>"
+        "<td align='center' style='padding:20px 8px;'>",
+        f"<table width='760' cellpadding='0' cellspacing='0' border='0' style='max-width:760px;width:100%;"
+        f"background:#ffffff;border:1px solid #dde2e8;font-family:{font};'>",
+        "<tr><td style='background:#1f3a5f;color:#ffffff;padding:22px 24px;'>"
+        "<div style='font-size:21px;font-weight:bold;'>📰 보험·의료 뉴스 브리핑</div>"
+        f"<div style='font-size:13px;color:#cfd9e8;margin-top:6px;'>{now:%Y.%m.%d} ({wd}) 기준 · {esc(count_txt)}</div>"
+        "</td></tr>",
+        "<tr><td style='padding:16px 24px 4px;font-size:14px;color:#333;line-height:1.6;'>"
+        "안녕하세요. 오늘의 보험·의료 주요 뉴스입니다. 기사 제목을 누르면 원문으로 이동합니다."
+        "</td></tr>",
+    ]
+    cur_field = None
+    for key, top in sections.items():
+        fld, cat = (key.split(" · ", 1) + [""])[:2] if " · " in key else (key, "")
+        if fld != cur_field:
+            out.append(
+                f"<tr><td style='padding:22px 24px 0;'><div style='font-size:18px;font-weight:bold;color:#1f3a5f;"
+                f"border-bottom:2px solid #1f3a5f;padding-bottom:8px;'>{esc(fld)}</div></td></tr>")
+            cur_field = fld
+        if cat:
+            out.append(
+                f"<tr><td style='padding:16px 24px 6px;font-size:15px;font-weight:bold;color:#222;'>"
+                f"▌{esc(cat)} <span style='font-weight:normal;color:#888;font-size:13px;'>({len(top)}건)</span></td></tr>")
+        rows = []
+        for i, c in enumerate(top, 1):
+            a = c["articles"][0]
+            link = c.get("url", a["link"])
+            srcs = ", ".join(sorted({x["source"] for x in c["articles"]}))
+            meta = [esc(srcs)]
+            if c.get("buzz"):
+                meta.append(f"🔥관련보도 {c['buzz']}곳")
+            if c.get("cat_how") == "섹션" and c.get("cat_label"):
+                meta.append("📂" + esc(c["cat_label"]))
+            summ = (f"<div style='font-size:13px;color:#444;margin-top:6px;line-height:1.6;'>{esc(c['summary'])}</div>"
+                    if c.get("summary") else "")
+            rows.append(
+                "<tr>"
+                f"<td align='center' valign='top' style='width:44px;padding:12px 4px;border:1px solid #dde2e8;"
+                f"font-size:14px;color:#555;'>{i}</td>"
+                "<td style='padding:12px 14px;border:1px solid #dde2e8;'>"
+                f"<a href='{esc(link, quote=True)}' style='font-size:15px;font-weight:bold;color:#1a56db;"
+                f"text-decoration:underline;line-height:1.5;'>{esc(a['title'])}</a>"
+                f"{summ}"
+                f"<div style='font-size:12px;color:#888;margin-top:6px;'>{' · '.join(meta)}</div>"
+                "</td></tr>")
+        out.append(
+            "<tr><td style='padding:0 24px;'>"
+            "<table width='100%' cellpadding='0' cellspacing='0' border='0' style='border-collapse:collapse;'>"
+            "<tr style='background:#eef1f6;'>"
+            "<th style='width:44px;padding:8px;border:1px solid #dde2e8;font-size:13px;color:#333;'>No</th>"
+            "<th style='padding:8px;border:1px solid #dde2e8;font-size:13px;color:#333;'>기사</th></tr>"
+            + "".join(rows) + "</table></td></tr>")
+    out.append(
+        "<tr><td style='padding:22px 24px;font-size:12px;color:#888;line-height:1.6;border-top:1px solid #eee;'>"
+        "이 메일은 자동으로 발송되었습니다. 요약문은 기사 본문 앞부분을 바탕으로 만들어져 원문과 다를 수 있으니 "
+        "중요한 내용은 원문을 확인하세요.</td></tr>")
+    out.append("</table></td></tr></table></body></html>")
+    return "".join(out)
+
+
 # ───────────────────────── 발송 ─────────────────────────
 def send_github_issue(md_body: str):
     """GitHub 이슈로 올림 → GitHub가 계정 이메일로 알림 메일을 보내줌 (외부 서비스 불필요)."""
@@ -681,8 +762,7 @@ def send_appsscript(subject: str, html_body: str, text_body: str) -> bool:
     if not (url and token and to):
         print("[Apps Script 미발송] APPS_SCRIPT_URL / APPS_SCRIPT_TOKEN / MAIL_TO 중 비어 있는 값이 있습니다.")
         return False
-    wrapped = ("<div style=\"font-family:'Malgun Gothic',sans-serif;max-width:760px;line-height:1.5\">"
-               + html_body + "</div>")
+    wrapped = html_body
     try:
         r = requests.post(url, json={"token": token, "to": to, "subject": subject,
                                      "html": wrapped, "text": text_body},
@@ -853,9 +933,10 @@ def main():
               "위 섹션명을 보고 CATEGORY_MAP 키워드를 보강하세요.")
         return
 
-    text_body, html_body = build(sections)
+    text_body, _ = build(sections)
+    html_body = build_email_html(sections)
     with open("briefing.html", "w", encoding="utf-8") as f:
-        f.write(f"<meta charset='utf-8'><body style='font-family:sans-serif;max-width:760px;margin:auto'>{html_body}</body>")
+        f.write(html_body)
     print("\n" + text_body)
     if args.dry_run:
         return
