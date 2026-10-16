@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "0 23 * * *"
   workflow_dispatch:
+    inputs:
+      send_mail:
+        description: "브리핑 메일을 실제로 발송 (끄면 저장만 하고 발송 안 함)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write   # data/ 폴더에 누적 저장 결과를 커밋하기 위해 필요
@@ -24,6 +29,8 @@ jobs:
       - run: pip install -r requirements.txt
       - run: python news_briefing.py
         env:
+          # 정기 실행(schedule)은 항상 발송, 수동 실행은 체크했을 때만 발송
+          SEND_MAIL: ${{ (github.event_name == 'schedule' || inputs.send_mail) && '1' || '0' }}
           TOP_N: "30"
           HOURS: "24"
           GITHUB_ISSUE: "1"
@@ -46,3 +53,4 @@ jobs:
             git pull --rebase --autostash
             git push
           fi
+
