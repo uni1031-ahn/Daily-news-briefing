@@ -21,9 +21,11 @@ v2 변경점
   python news_briefing.py              # 실제 발송
 """
 import argparse
+import base64
 import collections
 import concurrent.futures
 import difflib
+import hashlib
 import html
 import os
 import re
@@ -46,7 +48,7 @@ LAYOUT = (os.getenv("LAYOUT", "category") or "category").strip()   # category | 
 PER_CATEGORY = int(os.getenv("PER_CATEGORY", "5") or "5")          # 카테고리별 표시 건수
 SUMMARY_CHARS = int(os.getenv("SUMMARY_CHARS", "130") or "130")    # 요약문 최대 글자 수 (줄이면 메일이 촘촘해짐)
 ROW_PAD = int(os.getenv("ROW_PAD", "4") or "4")                    # 표 행의 위아래 여백(px). 작을수록 촘촘함
-BUILD = "v3.4-compact2"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
+BUILD = "v3.6-compact2"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
 
 SOURCES = {
     "보험": {
@@ -591,6 +593,21 @@ def summarize(cl):
 
 
 # ───────────────────────── 포맷 ─────────────────────────
+def drop_repeated_summaries(clusters):
+    """서로 다른 기사인데 요약 앞부분이 같으면(사이트 공통 홍보 문구 등) 요약을 비움."""
+    def key(c):
+        return (c.get("summary") or "").lstrip("| ").strip()[:30]
+    cnt = collections.Counter(key(c) for c in clusters if c.get("summary"))
+    removed = 0
+    for c in clusters:
+        k = key(c)
+        if k and cnt[k] >= 2:
+            c["summary"] = ""
+            removed += 1
+    if removed:
+        print(f"[요약] 반복되는 공통 문구 요약 {removed}건 제외")
+
+
 def build(sections):
     today = datetime.now(KST).strftime("%Y-%m-%d (%a)")
     text_lines = [f"📰 보험·의료 뉴스 브리핑 {today}\n"]
@@ -793,7 +810,8 @@ def send_appsscript(subject: str, html_body: str, text_body: str) -> bool:
             print(f"[Apps Script 발송 완료] {res.get('sent')}명 → {', '.join(to)}"
                   + (f" (실패: {res.get('failed')})" if res.get("failed") else ""))
             return True
-        print(f"[Apps Script 실패] {res}")
+        fp = base64.b64encode(hashlib.sha256(token.encode("utf-8")).digest()).decode()[:6]
+        print(f"[Apps Script 실패] {res} (GitHub Secret의 토큰: 길이 {len(token)}, 지문 {fp})")
     except Exception as ex:
         print(f"[Apps Script 실패] {ex}")
     return False
@@ -926,6 +944,7 @@ def main():
             chosen = [c for _, top in selected for c in top]
             for c in chosen:
                 summarize(c)
+            drop_repeated_summaries(chosen)
             ok = sum(1 for c in chosen if c.get("summary"))
             print(f"[{field}] 요약 성공 {ok}/{len(chosen)}")
             for cat, top in selected:
@@ -934,6 +953,7 @@ def main():
             buzz_top, recent_top = rank(clusters, TOP_N, field)
             for c in buzz_top + recent_top:
                 summarize(c)
+            drop_repeated_summaries(buzz_top + recent_top)
             ok = sum(1 for c in buzz_top + recent_top if c.get("summary"))
             print(f"[{field}] 요약 성공 {ok}/{len(buzz_top) + len(recent_top)}")
             if buzz_top:
