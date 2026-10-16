@@ -48,7 +48,7 @@ LAYOUT = (os.getenv("LAYOUT", "category") or "category").strip()   # category | 
 PER_CATEGORY = int(os.getenv("PER_CATEGORY", "5") or "5")          # 카테고리별 표시 건수
 SUMMARY_CHARS = int(os.getenv("SUMMARY_CHARS", "130") or "130")    # 요약문 최대 글자 수 (줄이면 메일이 촘촘해짐)
 ROW_PAD = int(os.getenv("ROW_PAD", "4") or "4")                    # 표 행의 위아래 여백(px). 작을수록 촘촘함
-BUILD = "v3.7-archive"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
+BUILD = "v3.9-nosend"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
 
 SOURCES = {
     "보험": {
@@ -151,9 +151,19 @@ def strip_html(s: str) -> str:
     return re.sub(r"\s+", " ", html.unescape(s)).strip()
 
 
+_TZ_RE = re.compile(r"(Z|GMT|UTC|[+-]\d{2}:?\d{2})\s*$", re.I)
+
+
 def to_dt(e):
+    """발행 시각(UTC). 원본 문자열에 시간대 표기가 없으면 국내 신문사 RSS이므로 KST로 간주."""
     t = getattr(e, "published_parsed", None) or getattr(e, "updated_parsed", None)
-    return datetime(*t[:6], tzinfo=timezone.utc) if t else None
+    if not t:
+        return None
+    dt = datetime(*t[:6], tzinfo=timezone.utc)
+    raw = (e.get("published") or e.get("updated") or "").strip() if hasattr(e, "get") else ""
+    if raw and not _TZ_RE.search(raw):
+        dt -= timedelta(hours=9)
+    return dt
 
 
 def fetch_direct(name: str, domain: str, cutoff):
@@ -165,6 +175,12 @@ def fetch_direct(name: str, domain: str, cutoff):
                 continue
             feed = feedparser.parse(r.content)
             items = []
+            if feed.entries:      # 시간대 해석 점검용 (원본 pubDate가 어떻게 오는지 로그로 확인)
+                e0 = feed.entries[0]
+                raw0 = e0.get("published") or e0.get("updated") or ""
+                dt0 = to_dt(e0)
+                print(f"[시간진단] {name}: 원본 pubDate={raw0!r} → KST {dt0.astimezone(KST):%m-%d %H:%M}"
+                      if dt0 else f"[시간진단] {name}: 원본 pubDate={raw0!r} → 해석 불가")
             for e in feed.entries:
                 pub = to_dt(e)
                 if pub and pub < cutoff:
@@ -807,7 +823,7 @@ def send_appsscript(subject: str, html_body: str, text_body: str) -> bool:
                   f"'액세스 권한: 모든 사용자'인지 확인하세요. 응답 일부: {r.text[:150]!r}")
             return False
         if res.get("ok"):
-            print(f"[Apps Script 발송 완료] {res.get('sent')}명 → {', '.join(to)}"
+            print(f"[Apps Script 발송 완료] {res.get('sent')}명"
                   + (f" (실패: {res.get('failed')})" if res.get("failed") else ""))
             return True
         fp = base64.b64encode(hashlib.sha256(token.encode("utf-8")).digest()).decode()[:6]
@@ -1044,6 +1060,9 @@ def main():
             archive_articles(all_clusters, chosen_ids)
         except Exception as ex:       # 저장 실패가 메일 발송을 막지 않도록
             print(f"[누적저장 실패] {ex}")
+    if os.getenv("SEND_MAIL", "1") == "0":      # 수동 테스트 실행: 저장만 하고 발송은 생략
+        print("[발송 생략] SEND_MAIL=0 → 메일·이슈·텔레그램을 보내지 않았습니다 (briefing.html과 누적 저장만 수행).")
+        return
     sent = [send_telegram(text_body)]
     subject = f"[브리핑] 보험·의료 뉴스 {datetime.now(KST):%Y-%m-%d}"
     delivered = False
