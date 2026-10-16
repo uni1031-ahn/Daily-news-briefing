@@ -48,7 +48,7 @@ LAYOUT = (os.getenv("LAYOUT", "category") or "category").strip()   # category | 
 PER_CATEGORY = int(os.getenv("PER_CATEGORY", "5") or "5")          # 카테고리별 표시 건수
 SUMMARY_CHARS = int(os.getenv("SUMMARY_CHARS", "130") or "130")    # 요약문 최대 글자 수 (줄이면 메일이 촘촘해짐)
 ROW_PAD = int(os.getenv("ROW_PAD", "4") or "4")                    # 표 행의 위아래 여백(px). 작을수록 촘촘함
-BUILD = "v3.6-compact2"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
+BUILD = "v3.7-archive"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
 
 SOURCES = {
     "보험": {
@@ -891,6 +891,65 @@ def send_email(html_body: str, text_body: str):
     return False
 
 
+
+# ───────────────────────── 누적 저장 (분석용 아카이브) ─────────────────────────
+# 브리핑에 실린 기사만이 아니라 '수집한 전체 기사'를 월별 CSV로 쌓습니다.
+# (이슈 반복 여부·매체 수·국면 변화 분석은 TOP 기사만으로는 왜곡되기 때문)
+ARCHIVE_ON = os.getenv("ARCHIVE", "1") != "0"
+ARCHIVE_DIR = os.getenv("ARCHIVE_DIR", "data/articles")
+ARCHIVE_DESC_CHARS = int(os.getenv("ARCHIVE_DESC_CHARS", "150") or "150")
+ARCHIVE_COLS = ["id", "first_seen", "pub", "field", "source", "title", "link", "desc",
+                "cat", "cat_how", "cluster", "cluster_size", "in_briefing", "buzz"]
+
+
+def article_id(field: str, source: str, title: str) -> str:
+    """같은 기사가 매일 다시 수집돼도 같은 id가 되도록 (분야+신문사+정규화 제목) 해시."""
+    return hashlib.sha1(f"{field}|{source}|{norm(title)}".encode("utf-8")).hexdigest()[:16]
+
+
+def archive_articles(all_clusters, chosen_ids):
+    """수집된 모든 기사를 data/articles/YYYY-MM.csv 에 추가 (이미 저장된 기사는 건너뜀)."""
+    import csv
+    now = datetime.now(KST)
+    prev = (now.replace(day=1) - timedelta(days=1)).strftime("%Y-%m")
+    cur_path = os.path.join(ARCHIVE_DIR, f"{now:%Y-%m}.csv")
+    seen = set()
+    for p in (os.path.join(ARCHIVE_DIR, f"{prev}.csv"), cur_path):
+        if os.path.exists(p):
+            with open(p, encoding="utf-8-sig", newline="") as f:
+                seen |= {r.get("id") for r in csv.DictReader(f)}
+    rows, total = [], 0
+    for field, clusters in all_clusters.items():
+        for c in clusters:
+            cid = hashlib.sha1(c["norm"].encode("utf-8")).hexdigest()[:10]
+            for a in c["articles"]:
+                total += 1
+                aid = article_id(field, a["source"], a["title"])
+                if aid in seen:
+                    continue
+                seen.add(aid)
+                pub = a["pub"].astimezone(KST).strftime("%Y-%m-%d %H:%M") if a.get("pub") else ""
+                link = c["url"] if (c.get("url") and a is c["articles"][0]) else a.get("link", "")
+                rows.append({
+                    "id": aid, "first_seen": f"{now:%Y-%m-%d}", "pub": pub, "field": field,
+                    "source": a["source"], "title": a["title"], "link": link,
+                    "desc": shorten(a.get("desc", ""), ARCHIVE_DESC_CHARS),
+                    "cat": c.get("cat", ""), "cat_how": c.get("cat_how", ""),
+                    "cluster": cid, "cluster_size": len(c["articles"]),
+                    "in_briefing": 1 if id(c) in chosen_ids else 0,
+                    "buzz": c.get("buzz", ""),
+                })
+    os.makedirs(ARCHIVE_DIR, exist_ok=True)
+    is_new = not os.path.exists(cur_path)
+    # 새 파일만 BOM(utf-8-sig)을 붙여 엑셀에서 한글이 깨지지 않게 함 (이어쓰기는 BOM 없이)
+    with open(cur_path, "w" if is_new else "a", encoding="utf-8-sig" if is_new else "utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=ARCHIVE_COLS)
+        if is_new:
+            w.writeheader()
+        w.writerows(rows)
+    print(f"[누적저장] 신규 {len(rows)}건 저장 (이번 수집 {total}건 중 기존 {total - len(rows)}건은 중복) → {cur_path}")
+
+
 # ───────────────────────── main ─────────────────────────
 def collect_field(field, srcs):
     items, excluded = [], 0
@@ -926,6 +985,7 @@ def main():
     args = ap.parse_args()
 
     sections = {}
+    all_clusters, chosen_ids = {}, set()      # 누적 저장용
     for field, srcs in SOURCES.items():
         items, excluded = collect_field(field, srcs)
         if args.check:
@@ -934,6 +994,7 @@ def main():
             print(f"[{field}] 홍보·단신성 제목 제외 {excluded}건")
         clusters = cluster(items)
         print(f"[{field}] 중복 병합 후 {len(clusters)}개 이슈 (기사 {len(items)}건)")
+        all_clusters[field] = clusters
 
         if LAYOUT == "category" or args.sections:
             assign_categories(clusters, field)
@@ -942,6 +1003,7 @@ def main():
                 continue
             selected = select_by_category(clusters, field, PER_CATEGORY)
             chosen = [c for _, top in selected for c in top]
+            chosen_ids |= {id(c) for c in chosen}
             for c in chosen:
                 summarize(c)
             drop_repeated_summaries(chosen)
@@ -951,6 +1013,7 @@ def main():
                 sections[f"{field} · {cat}"] = top
         else:
             buzz_top, recent_top = rank(clusters, TOP_N, field)
+            chosen_ids |= {id(c) for c in buzz_top + recent_top}
             for c in buzz_top + recent_top:
                 summarize(c)
             drop_repeated_summaries(buzz_top + recent_top)
@@ -976,6 +1039,11 @@ def main():
     print("\n" + text_body)
     if args.dry_run:
         return
+    if ARCHIVE_ON:
+        try:
+            archive_articles(all_clusters, chosen_ids)
+        except Exception as ex:       # 저장 실패가 메일 발송을 막지 않도록
+            print(f"[누적저장 실패] {ex}")
     sent = [send_telegram(text_body)]
     subject = f"[브리핑] 보험·의료 뉴스 {datetime.now(KST):%Y-%m-%d}"
     delivered = False
