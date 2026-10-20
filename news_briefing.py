@@ -48,7 +48,7 @@ LAYOUT = (os.getenv("LAYOUT", "category") or "category").strip()   # category | 
 PER_CATEGORY = int(os.getenv("PER_CATEGORY", "5") or "5")          # 카테고리별 표시 건수
 SUMMARY_CHARS = int(os.getenv("SUMMARY_CHARS", "130") or "130")    # 요약문 최대 글자 수 (줄이면 메일이 촘촘해짐)
 ROW_PAD = int(os.getenv("ROW_PAD", "4") or "4")                    # 표 행의 위아래 여백(px). 작을수록 촘촘함
-BUILD = "v3.9-nosend"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
+BUILD = "v3.9-compact2"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
 
 SOURCES = {
     "보험": {
@@ -151,19 +151,9 @@ def strip_html(s: str) -> str:
     return re.sub(r"\s+", " ", html.unescape(s)).strip()
 
 
-_TZ_RE = re.compile(r"(Z|GMT|UTC|[+-]\d{2}:?\d{2})\s*$", re.I)
-
-
 def to_dt(e):
-    """발행 시각(UTC). 원본 문자열에 시간대 표기가 없으면 국내 신문사 RSS이므로 KST로 간주."""
     t = getattr(e, "published_parsed", None) or getattr(e, "updated_parsed", None)
-    if not t:
-        return None
-    dt = datetime(*t[:6], tzinfo=timezone.utc)
-    raw = (e.get("published") or e.get("updated") or "").strip() if hasattr(e, "get") else ""
-    if raw and not _TZ_RE.search(raw):
-        dt -= timedelta(hours=9)
-    return dt
+    return datetime(*t[:6], tzinfo=timezone.utc) if t else None
 
 
 def fetch_direct(name: str, domain: str, cutoff):
@@ -175,12 +165,6 @@ def fetch_direct(name: str, domain: str, cutoff):
                 continue
             feed = feedparser.parse(r.content)
             items = []
-            if feed.entries:      # 시간대 해석 점검용 (원본 pubDate가 어떻게 오는지 로그로 확인)
-                e0 = feed.entries[0]
-                raw0 = e0.get("published") or e0.get("updated") or ""
-                dt0 = to_dt(e0)
-                print(f"[시간진단] {name}: 원본 pubDate={raw0!r} → KST {dt0.astimezone(KST):%m-%d %H:%M}"
-                      if dt0 else f"[시간진단] {name}: 원본 pubDate={raw0!r} → 해석 불가")
             for e in feed.entries:
                 pub = to_dt(e)
                 if pub and pub < cutoff:
@@ -241,12 +225,49 @@ def norm(t: str) -> str:
     return re.sub(r"\s+", " ", t).strip().lower()
 
 
+JOSA = ("으로", "에서", "에게", "까지", "부터", "이나", "에는", "에도",
+        "와", "과", "은", "는", "이", "가", "을", "를", "의", "에", "로", "도")
+
+
+def stem(w: str) -> str:
+    """단어 끝의 조사를 떼어 '65만명에'와 '65만명', '지원에'와 '지원'을 같은 단어로 취급."""
+    if len(w) >= 3:
+        for j in JOSA:
+            if w.endswith(j) and len(w) - len(j) >= 2:
+                return w[: -len(j)]
+    return w
+
+
 def tokens(title: str) -> set:
-    return {w for w in norm(title).split() if len(w) >= 2}
+    return {stem(w) for w in norm(title).split() if len(w) >= 2}
 
 
-def similar(n1, t1, n2, t2) -> bool:
-    """같은 이슈의 기사인지 판단: (0) 회사명 확인 (1) 문자열 유사도 (2) 핵심 단어 겹침."""
+def quoted_phrases(title: str) -> frozenset:
+    """제목 속 따옴표 안 문구(상품명·인용문)를 정규화해서 반환 (너무 짧은 것은 제외)."""
+    out = set()
+    for m in re.finditer(r"['‘“\"「《]([^'’”\"」》]{2,40})['’”\"」》]", title or ""):
+        q = norm(m.group(1))
+        if len(q.replace(" ", "")) >= 4:
+            out.add(q)
+    return frozenset(out)
+
+
+def quote_conflict(q1, q2) -> bool:
+    """양쪽 제목에 따옴표 문구가 모두 있는데 서로 겹치지(포함하지) 않으면 True (서로 다른 상품명)."""
+    if not q1 or not q2:
+        return False
+    return not any(a in b or b in a for a in q1 for b in q2)
+
+
+def desc_ok(d1, d2) -> bool:
+    """안전장치: 두 기사의 본문 앞부분(RSS 설명)이 있으면 단어가 조금이라도 겹쳐야 같은 이슈로 인정."""
+    if len(d1) < 5 or len(d2) < 5:
+        return True                      # 설명이 부족하면 제목 판단만 사용
+    return len(d1 & d2) / min(len(d1), len(d2)) >= 0.15
+
+
+def similar(n1, t1, n2, t2, q1=frozenset(), q2=frozenset(), d1=frozenset(), d2=frozenset()) -> bool:
+    """같은 이슈의 기사인지 판단: (0) 회사명 확인 (1) 문자열 유사도 (2) 핵심 단어 겹침 (3) 같은 상품명 인용 (4) 본문 안전장치."""
     if n1 == n2:
         return True
     # 제목 맨 앞 회사명이 서로 다르면(예: 삼성생명 vs 한화생명) 다른 이슈로 판단
@@ -261,11 +282,18 @@ def similar(n1, t1, n2, t2) -> bool:
         return False
     overlap = len(common) / min(len(t1), len(t2))
     long_common = any(len(w) >= 6 for w in common)      # 상품명·고유명사처럼 긴 공통 단어
-    # (a) 상품명·고유명사처럼 긴 공통 단어가 있고 공통 단어가 3개 이상
-    if len(common) >= 3 and overlap >= 0.6 and long_common:
-        return True
-    # (b) 상품명을 한글/영문으로 달리 표기해 긴 공통 단어가 없어도, 공통 단어가 5개 이상이고 대부분 겹치면 같은 이슈
-    return len(common) >= 5 and overlap >= 0.7
+    loose = (
+        # (0') 같은 따옴표 문구(상품명 등) + 다른 공통 단어 3개 이상
+        ((q1 & q2) and len(common) >= 3)
+        # (a) 긴 공통 단어가 있고 공통 단어 3개 이상, 짧은 쪽 제목의 60% 이상 겹침
+        or (len(common) >= 3 and overlap >= 0.6 and long_common)
+        # (b) 긴 공통 단어가 없어도 공통 단어 5개 이상, 70% 이상 겹침 (한글/영문 표기 차이 등)
+        or (len(common) >= 5 and overlap >= 0.7)
+        # (c) 같은 회사 기사이고 공통 단어(회사명 포함) 4개 이상, 50% 이상 겹침
+        #     단, 양쪽 제목에 서로 다른 상품명(따옴표 문구)이 있으면 다른 상품 기사로 보고 제외
+        or (f1 == f2 and len(common) >= 4 and overlap >= 0.5 and not quote_conflict(q1, q2))
+    )
+    return bool(loose) and desc_ok(d1, d2)
 
 
 def cluster(items):
@@ -276,13 +304,15 @@ def cluster(items):
         if not n:
             continue
         tk = tokens(it["title"])
+        qs = quoted_phrases(it["title"])
+        ds = frozenset(tokens((it.get("desc") or "")[:200]))
         for c in clusters:
-            if any(similar(n, tk, m, tm) for m, tm in c["keys"]):
+            if any(similar(n, tk, m, tm, qs, qm, ds, dm) for m, tm, qm, dm in c["keys"]):
                 c["articles"].append(it)
-                c["keys"].append((n, tk))
+                c["keys"].append((n, tk, qs, ds))
                 break
         else:
-            clusters.append({"norm": n, "keys": [(n, tk)], "articles": [it]})
+            clusters.append({"norm": n, "keys": [(n, tk, qs, ds)], "articles": [it]})
     return clusters
 
 
@@ -823,7 +853,7 @@ def send_appsscript(subject: str, html_body: str, text_body: str) -> bool:
                   f"'액세스 권한: 모든 사용자'인지 확인하세요. 응답 일부: {r.text[:150]!r}")
             return False
         if res.get("ok"):
-            print(f"[Apps Script 발송 완료] {res.get('sent')}명"
+            print(f"[Apps Script 발송 완료] {res.get('sent')}명 → {', '.join(to)}"
                   + (f" (실패: {res.get('failed')})" if res.get("failed") else ""))
             return True
         fp = base64.b64encode(hashlib.sha256(token.encode("utf-8")).digest()).decode()[:6]
@@ -907,65 +937,6 @@ def send_email(html_body: str, text_body: str):
     return False
 
 
-
-# ───────────────────────── 누적 저장 (분석용 아카이브) ─────────────────────────
-# 브리핑에 실린 기사만이 아니라 '수집한 전체 기사'를 월별 CSV로 쌓습니다.
-# (이슈 반복 여부·매체 수·국면 변화 분석은 TOP 기사만으로는 왜곡되기 때문)
-ARCHIVE_ON = os.getenv("ARCHIVE", "1") != "0"
-ARCHIVE_DIR = os.getenv("ARCHIVE_DIR", "data/articles")
-ARCHIVE_DESC_CHARS = int(os.getenv("ARCHIVE_DESC_CHARS", "150") or "150")
-ARCHIVE_COLS = ["id", "first_seen", "pub", "field", "source", "title", "link", "desc",
-                "cat", "cat_how", "cluster", "cluster_size", "in_briefing", "buzz"]
-
-
-def article_id(field: str, source: str, title: str) -> str:
-    """같은 기사가 매일 다시 수집돼도 같은 id가 되도록 (분야+신문사+정규화 제목) 해시."""
-    return hashlib.sha1(f"{field}|{source}|{norm(title)}".encode("utf-8")).hexdigest()[:16]
-
-
-def archive_articles(all_clusters, chosen_ids):
-    """수집된 모든 기사를 data/articles/YYYY-MM.csv 에 추가 (이미 저장된 기사는 건너뜀)."""
-    import csv
-    now = datetime.now(KST)
-    prev = (now.replace(day=1) - timedelta(days=1)).strftime("%Y-%m")
-    cur_path = os.path.join(ARCHIVE_DIR, f"{now:%Y-%m}.csv")
-    seen = set()
-    for p in (os.path.join(ARCHIVE_DIR, f"{prev}.csv"), cur_path):
-        if os.path.exists(p):
-            with open(p, encoding="utf-8-sig", newline="") as f:
-                seen |= {r.get("id") for r in csv.DictReader(f)}
-    rows, total = [], 0
-    for field, clusters in all_clusters.items():
-        for c in clusters:
-            cid = hashlib.sha1(c["norm"].encode("utf-8")).hexdigest()[:10]
-            for a in c["articles"]:
-                total += 1
-                aid = article_id(field, a["source"], a["title"])
-                if aid in seen:
-                    continue
-                seen.add(aid)
-                pub = a["pub"].astimezone(KST).strftime("%Y-%m-%d %H:%M") if a.get("pub") else ""
-                link = c["url"] if (c.get("url") and a is c["articles"][0]) else a.get("link", "")
-                rows.append({
-                    "id": aid, "first_seen": f"{now:%Y-%m-%d}", "pub": pub, "field": field,
-                    "source": a["source"], "title": a["title"], "link": link,
-                    "desc": shorten(a.get("desc", ""), ARCHIVE_DESC_CHARS),
-                    "cat": c.get("cat", ""), "cat_how": c.get("cat_how", ""),
-                    "cluster": cid, "cluster_size": len(c["articles"]),
-                    "in_briefing": 1 if id(c) in chosen_ids else 0,
-                    "buzz": c.get("buzz", ""),
-                })
-    os.makedirs(ARCHIVE_DIR, exist_ok=True)
-    is_new = not os.path.exists(cur_path)
-    # 새 파일만 BOM(utf-8-sig)을 붙여 엑셀에서 한글이 깨지지 않게 함 (이어쓰기는 BOM 없이)
-    with open(cur_path, "w" if is_new else "a", encoding="utf-8-sig" if is_new else "utf-8", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=ARCHIVE_COLS)
-        if is_new:
-            w.writeheader()
-        w.writerows(rows)
-    print(f"[누적저장] 신규 {len(rows)}건 저장 (이번 수집 {total}건 중 기존 {total - len(rows)}건은 중복) → {cur_path}")
-
-
 # ───────────────────────── main ─────────────────────────
 def collect_field(field, srcs):
     items, excluded = [], 0
@@ -1001,7 +972,6 @@ def main():
     args = ap.parse_args()
 
     sections = {}
-    all_clusters, chosen_ids = {}, set()      # 누적 저장용
     for field, srcs in SOURCES.items():
         items, excluded = collect_field(field, srcs)
         if args.check:
@@ -1010,7 +980,6 @@ def main():
             print(f"[{field}] 홍보·단신성 제목 제외 {excluded}건")
         clusters = cluster(items)
         print(f"[{field}] 중복 병합 후 {len(clusters)}개 이슈 (기사 {len(items)}건)")
-        all_clusters[field] = clusters
 
         if LAYOUT == "category" or args.sections:
             assign_categories(clusters, field)
@@ -1019,7 +988,6 @@ def main():
                 continue
             selected = select_by_category(clusters, field, PER_CATEGORY)
             chosen = [c for _, top in selected for c in top]
-            chosen_ids |= {id(c) for c in chosen}
             for c in chosen:
                 summarize(c)
             drop_repeated_summaries(chosen)
@@ -1029,7 +997,6 @@ def main():
                 sections[f"{field} · {cat}"] = top
         else:
             buzz_top, recent_top = rank(clusters, TOP_N, field)
-            chosen_ids |= {id(c) for c in buzz_top + recent_top}
             for c in buzz_top + recent_top:
                 summarize(c)
             drop_repeated_summaries(buzz_top + recent_top)
@@ -1054,14 +1021,6 @@ def main():
         f.write(html_body)
     print("\n" + text_body)
     if args.dry_run:
-        return
-    if ARCHIVE_ON:
-        try:
-            archive_articles(all_clusters, chosen_ids)
-        except Exception as ex:       # 저장 실패가 메일 발송을 막지 않도록
-            print(f"[누적저장 실패] {ex}")
-    if os.getenv("SEND_MAIL", "1") == "0":      # 수동 테스트 실행: 저장만 하고 발송은 생략
-        print("[발송 생략] SEND_MAIL=0 → 메일·이슈·텔레그램을 보내지 않았습니다 (briefing.html과 누적 저장만 수행).")
         return
     sent = [send_telegram(text_body)]
     subject = f"[브리핑] 보험·의료 뉴스 {datetime.now(KST):%Y-%m-%d}"
