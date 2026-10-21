@@ -40,6 +40,12 @@ from urllib.parse import quote
 import feedparser
 import requests
 
+try:
+    import extra_news          # 2차 수집(네이버 뉴스 검색). 실패해도 1차 브리핑은 계속 진행
+except Exception as _e:
+    extra_news = None
+    print(f"[2차] extra_news 모듈을 불러오지 못했습니다: {_e}", file=sys.stderr)
+
 # ───────────────────────── 설정 ─────────────────────────
 TOP_N = int(os.getenv("TOP_N", "10") or "10")      # 분야별 상위 기사 수 (10 또는 20)
 HOURS = int(os.getenv("HOURS", "24") or "24")      # 최근 몇 시간 기사 수집
@@ -48,7 +54,8 @@ LAYOUT = (os.getenv("LAYOUT", "category") or "category").strip()   # category | 
 PER_CATEGORY = int(os.getenv("PER_CATEGORY", "5") or "5")          # 카테고리별 표시 건수
 SUMMARY_CHARS = int(os.getenv("SUMMARY_CHARS", "130") or "130")    # 요약문 최대 글자 수 (줄이면 메일이 촘촘해짐)
 ROW_PAD = int(os.getenv("ROW_PAD", "4") or "4")                    # 표 행의 위아래 여백(px). 작을수록 촘촘함
-BUILD = "v3.9-compact2"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
+RUN_INFO = {"note": "", "warn": False}     # 메일 상단에 표시할 수집 현황(2차 수집 모듈이 채움)
+BUILD = "v3.10-extra"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
 
 SOURCES = {
     "보험": {
@@ -151,9 +158,19 @@ def strip_html(s: str) -> str:
     return re.sub(r"\s+", " ", html.unescape(s)).strip()
 
 
+_TZ_RE = re.compile(r"(Z|GMT|UTC|[+-]\d{2}:?\d{2})\s*$", re.I)
+
+
 def to_dt(e):
+    """발행 시각(UTC). 원본 문자열에 시간대 표기가 없으면 국내 신문사 RSS이므로 KST로 간주."""
     t = getattr(e, "published_parsed", None) or getattr(e, "updated_parsed", None)
-    return datetime(*t[:6], tzinfo=timezone.utc) if t else None
+    if not t:
+        return None
+    dt = datetime(*t[:6], tzinfo=timezone.utc)
+    raw = (e.get("published") or e.get("updated") or "").strip() if hasattr(e, "get") else ""
+    if raw and not _TZ_RE.search(raw):
+        dt -= timedelta(hours=9)
+    return dt
 
 
 def fetch_direct(name: str, domain: str, cutoff):
@@ -165,6 +182,12 @@ def fetch_direct(name: str, domain: str, cutoff):
                 continue
             feed = feedparser.parse(r.content)
             items = []
+            if feed.entries:      # 시간대 해석 점검용 (원본 pubDate가 어떻게 오는지 로그로 확인)
+                e0 = feed.entries[0]
+                raw0 = e0.get("published") or e0.get("updated") or ""
+                dt0 = to_dt(e0)
+                print(f"[시간진단] {name}: 원본 pubDate={raw0!r} → KST {dt0.astimezone(KST):%m-%d %H:%M}"
+                      if dt0 else f"[시간진단] {name}: 원본 pubDate={raw0!r} → 해석 불가")
             for e in feed.entries:
                 pub = to_dt(e)
                 if pub and pub < cutoff:
@@ -658,6 +681,8 @@ def build(sections):
     today = datetime.now(KST).strftime("%Y-%m-%d (%a)")
     text_lines = [f"📰 보험·의료 뉴스 브리핑 {today}\n"]
     html_parts = [f"<h2>📰 보험·의료 뉴스 브리핑 {today}</h2>"]
+    if RUN_INFO["note"]:
+        text_lines.append(f"ℹ {RUN_INFO['note']}\n")
     for field, top in sections.items():
         text_lines.append(f"━━ {field} ({len(top)}건) ━━")
         html_parts.append(f"<h3>{field} ({len(top)}건)</h3><ol>")
@@ -690,6 +715,8 @@ def build_markdown(sections):
     owner = os.getenv("GITHUB_REPOSITORY_OWNER", "")
     lines = [f"@{owner} 오늘의 보험·의료 뉴스 브리핑입니다 ({today})\n" if owner
              else f"오늘의 보험·의료 뉴스 브리핑입니다 ({today})\n"]
+    if RUN_INFO["note"]:
+        lines.append(f"> ℹ {RUN_INFO['note']}\n")
     for field, top in sections.items():
         lines.append(f"## {field} ({len(top)}건)\n")
         for i, c in enumerate(top, 1):
@@ -739,6 +766,10 @@ def build_email_html(sections) -> str:
         "안녕하세요. 오늘의 보험·의료 주요 뉴스입니다. 기사 제목을 누르면 원문으로 이동합니다."
         "</td></tr>",
     ]
+    if RUN_INFO["note"]:
+        col = "#c0392b" if RUN_INFO["warn"] else "#888"
+        out.append(f"<tr><td style='padding:2px 24px 6px;font-size:11.5px;color:{col};line-height:1.4;'>"
+                   f"{esc(RUN_INFO['note'])}</td></tr>")
     cur_field = None
     for key, top in sections.items():
         fld, cat = (key.split(" · ", 1) + [""])[:2] if " · " in key else (key, "")
@@ -937,6 +968,65 @@ def send_email(html_body: str, text_body: str):
     return False
 
 
+
+# ───────────────────────── 누적 저장 (분석용 아카이브) ─────────────────────────
+# 브리핑에 실린 기사만이 아니라 '수집한 전체 기사'를 월별 CSV로 쌓습니다.
+# (이슈 반복 여부·매체 수·국면 변화 분석은 TOP 기사만으로는 왜곡되기 때문)
+ARCHIVE_ON = os.getenv("ARCHIVE", "1") != "0"
+ARCHIVE_DIR = os.getenv("ARCHIVE_DIR", "data/articles")
+ARCHIVE_DESC_CHARS = int(os.getenv("ARCHIVE_DESC_CHARS", "150") or "150")
+ARCHIVE_COLS = ["id", "first_seen", "pub", "field", "source", "title", "link", "desc",
+                "cat", "cat_how", "cluster", "cluster_size", "in_briefing", "buzz"]
+
+
+def article_id(field: str, source: str, title: str) -> str:
+    """같은 기사가 매일 다시 수집돼도 같은 id가 되도록 (분야+신문사+정규화 제목) 해시."""
+    return hashlib.sha1(f"{field}|{source}|{norm(title)}".encode("utf-8")).hexdigest()[:16]
+
+
+def archive_articles(all_clusters, chosen_ids):
+    """수집된 모든 기사를 data/articles/YYYY-MM.csv 에 추가 (이미 저장된 기사는 건너뜀)."""
+    import csv
+    now = datetime.now(KST)
+    prev = (now.replace(day=1) - timedelta(days=1)).strftime("%Y-%m")
+    cur_path = os.path.join(ARCHIVE_DIR, f"{now:%Y-%m}.csv")
+    seen = set()
+    for p in (os.path.join(ARCHIVE_DIR, f"{prev}.csv"), cur_path):
+        if os.path.exists(p):
+            with open(p, encoding="utf-8-sig", newline="") as f:
+                seen |= {r.get("id") for r in csv.DictReader(f)}
+    rows, total = [], 0
+    for field, clusters in all_clusters.items():
+        for c in clusters:
+            cid = hashlib.sha1(c["norm"].encode("utf-8")).hexdigest()[:10]
+            for a in c["articles"]:
+                total += 1
+                aid = article_id(field, a["source"], a["title"])
+                if aid in seen:
+                    continue
+                seen.add(aid)
+                pub = a["pub"].astimezone(KST).strftime("%Y-%m-%d %H:%M") if a.get("pub") else ""
+                link = c["url"] if (c.get("url") and a is c["articles"][0]) else a.get("link", "")
+                rows.append({
+                    "id": aid, "first_seen": f"{now:%Y-%m-%d}", "pub": pub, "field": field,
+                    "source": a["source"], "title": a["title"], "link": link,
+                    "desc": shorten(a.get("desc", ""), ARCHIVE_DESC_CHARS),
+                    "cat": c.get("cat", ""), "cat_how": c.get("cat_how", ""),
+                    "cluster": cid, "cluster_size": len(c["articles"]),
+                    "in_briefing": 1 if id(c) in chosen_ids else 0,
+                    "buzz": c.get("buzz", ""),
+                })
+    os.makedirs(ARCHIVE_DIR, exist_ok=True)
+    is_new = not os.path.exists(cur_path)
+    # 새 파일만 BOM(utf-8-sig)을 붙여 엑셀에서 한글이 깨지지 않게 함 (이어쓰기는 BOM 없이)
+    with open(cur_path, "w" if is_new else "a", encoding="utf-8-sig" if is_new else "utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=ARCHIVE_COLS)
+        if is_new:
+            w.writeheader()
+        w.writerows(rows)
+    print(f"[누적저장] 신규 {len(rows)}건 저장 (이번 수집 {total}건 중 기존 {total - len(rows)}건은 중복) → {cur_path}")
+
+
 # ───────────────────────── main ─────────────────────────
 def collect_field(field, srcs):
     items, excluded = [], 0
@@ -972,14 +1062,18 @@ def main():
     args = ap.parse_args()
 
     sections = {}
+    all_clusters, chosen_ids = {}, set()      # 누적 저장용
+    primary_all = []                          # 2차 수집이 1차와 겹침을 가릴 때 쓰는 1차 기사 전체
     for field, srcs in SOURCES.items():
         items, excluded = collect_field(field, srcs)
+        primary_all += items
         if args.check:
             continue
         if excluded:
             print(f"[{field}] 홍보·단신성 제목 제외 {excluded}건")
         clusters = cluster(items)
         print(f"[{field}] 중복 병합 후 {len(clusters)}개 이슈 (기사 {len(items)}건)")
+        all_clusters[field] = clusters
 
         if LAYOUT == "category" or args.sections:
             assign_categories(clusters, field)
@@ -988,6 +1082,7 @@ def main():
                 continue
             selected = select_by_category(clusters, field, PER_CATEGORY)
             chosen = [c for _, top in selected for c in top]
+            chosen_ids |= {id(c) for c in chosen}
             for c in chosen:
                 summarize(c)
             drop_repeated_summaries(chosen)
@@ -997,6 +1092,7 @@ def main():
                 sections[f"{field} · {cat}"] = top
         else:
             buzz_top, recent_top = rank(clusters, TOP_N, field)
+            chosen_ids |= {id(c) for c in buzz_top + recent_top}
             for c in buzz_top + recent_top:
                 summarize(c)
             drop_repeated_summaries(buzz_top + recent_top)
@@ -1015,6 +1111,17 @@ def main():
               "위 섹션명을 보고 CATEGORY_MAP 키워드를 보강하세요.")
         return
 
+    if extra_news is not None:      # 2차 수집: 지정 신문사 밖 기사를 '기타 매체'로 보완 (실패해도 1차는 그대로)
+        try:
+            extra_sections, note, warn = extra_news.run(
+                nb=sys.modules[__name__], primary_items=primary_all, hours=HOURS,
+                mark_seen=(not args.dry_run) and os.getenv("SEND_MAIL", "1") != "0")
+            sections.update(extra_sections)
+            RUN_INFO.update(note=note, warn=warn)
+        except Exception as ex:
+            RUN_INFO.update(note=f"2차 수집 오류: {ex}", warn=True)
+            print(f"[2차] 오류로 건너뜀: {ex}", file=sys.stderr)
+
     text_body, _ = build(sections)
     html_body = build_email_html(sections)
     with open("briefing.html", "w", encoding="utf-8") as f:
@@ -1022,8 +1129,16 @@ def main():
     print("\n" + text_body)
     if args.dry_run:
         return
+    if ARCHIVE_ON:
+        try:
+            archive_articles(all_clusters, chosen_ids)
+        except Exception as ex:       # 저장 실패가 메일 발송을 막지 않도록
+            print(f"[누적저장 실패] {ex}")
+    if os.getenv("SEND_MAIL", "1") == "0":      # 수동 테스트 실행: 저장만 하고 발송은 생략
+        print("[발송 생략] SEND_MAIL=0 → 메일·이슈·텔레그램을 보내지 않았습니다 (briefing.html과 누적 저장만 수행).")
+        return
     sent = [send_telegram(text_body)]
-    subject = f"[브리핑] 보험·의료 뉴스 {datetime.now(KST):%Y-%m-%d}"
+    subject = f"{'⚠ ' if RUN_INFO['warn'] else ''}[브리핑] 보험·의료 뉴스 {datetime.now(KST):%Y-%m-%d}"
     delivered = False
     if os.getenv("APPS_SCRIPT_URL"):
         delivered = send_appsscript(subject, html_body, text_body)
