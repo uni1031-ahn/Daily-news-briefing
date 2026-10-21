@@ -56,3 +56,10 @@ jobs:
             git pull --rebase --autostash
             git push
           fi
+
+      - name: 결과 화면 보관 (테스트 확인용)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: briefing-html
+          path: briefing.html
