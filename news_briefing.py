@@ -55,7 +55,7 @@ PER_CATEGORY = int(os.getenv("PER_CATEGORY", "5") or "5")          # 카테고�
 SUMMARY_CHARS = int(os.getenv("SUMMARY_CHARS", "130") or "130")    # 요약문 최대 글자 수 (줄이면 메일이 촘촘해짐)
 ROW_PAD = int(os.getenv("ROW_PAD", "4") or "4")                    # 표 행의 위아래 여백(px). 작을수록 촘촘함
 RUN_INFO = {"note": "", "warn": False}     # 메일 상단에 표시할 수집 현황(2차 수집 모듈이 채움)
-BUILD = "v3.10-extra"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
+BUILD = "v3.11-portal"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
 
 SOURCES = {
     "보험": {
@@ -1027,6 +1027,43 @@ def archive_articles(all_clusters, chosen_ids):
     print(f"[누적저장] 신규 {len(rows)}건 저장 (이번 수집 {total}건 중 기존 {total - len(rows)}건은 중복) → {cur_path}")
 
 
+# ───────────────────────── 포털 연동 (메일과 같은 내용을 웹 포털에도 올림) ─────────────────────────
+def export_portal(sections):
+    """오늘 브리핑에 실린 기사를 포털(Cloudflare)로 보냅니다. PORTAL_URL/SYNC_TOKEN이 없으면 건너뜀. 실패해도 메일 발송은 계속."""
+    url = (os.getenv("PORTAL_URL") or "").strip().rstrip("/")
+    tok = (os.getenv("SYNC_TOKEN") or "").strip()
+    if not (url and tok):
+        print("[포털] PORTAL_URL/SYNC_TOKEN 이 없어 건너뜁니다")
+        return False
+    day = datetime.now(KST).strftime("%Y-%m-%d")
+    items = []
+    for key, top in sections.items():
+        fld, cat = (key.split(" · ", 1) + [""])[:2] if " · " in key else (key, "")
+        for i, c in enumerate(top, 1):
+            a = c["articles"][0]
+            pub = a["pub"].astimezone(KST).strftime("%Y-%m-%d %H:%M") if a.get("pub") else day
+            srcs = sorted({x["source"] for x in c["articles"]})
+            items.append({
+                "id": article_id(fld, a["source"], a["title"]) + "_" + day.replace("-", ""),
+                "day": day, "field": fld, "cat": cat or "기타", "rank": i,
+                "title": a["title"], "link": c.get("url", a["link"]),
+                "source": srcs[0] if srcs else a["source"], "sources": srcs,
+                "summary": c.get("summary", "") or "", "buzz": c.get("buzz", 0) or 0, "pub": pub,
+            })
+    try:
+        for k in range(0, len(items), 200):
+            r = requests.post(url + "/api/sync/news", json={"items": items[k:k + 200]}, timeout=60,
+                              headers={"Authorization": "Bearer " + tok, "User-Agent": "insurance-radar-sync/1.0"})
+            if r.status_code != 200:
+                print(f"[포털 실패] {r.status_code} {r.text[:200]}")
+                return False
+        print(f"[포털] 오늘 브리핑 {len(items)}건을 포털에 올렸습니다")
+        return True
+    except Exception as ex:
+        print(f"[포털 실패] {ex}")
+        return False
+
+
 # ───────────────────────── main ─────────────────────────
 def collect_field(field, srcs):
     items, excluded = [], 0
@@ -1129,6 +1166,7 @@ def main():
     print("\n" + text_body)
     if args.dry_run:
         return
+    export_portal(sections)       # 메일 발송 생략(SEND_MAIL=0)이어도 포털에는 올립니다. 포털 문제로 메일이 막히지 않음
     if ARCHIVE_ON:
         try:
             archive_articles(all_clusters, chosen_ids)
