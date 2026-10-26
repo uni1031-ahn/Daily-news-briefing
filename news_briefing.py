@@ -1170,6 +1170,11 @@ def main():
             archive_articles(all_clusters, chosen_ids)
         except Exception as ex:       # 저장 실패가 메일 발송을 막지 않도록
             print(f"[누적저장 실패] {ex}")
+        try:                          # 오늘 수집분도 포털의 '이슈 판단용 기록'에 매일 보태 둡니다 (실패해도 무관)
+            import backfill_portal
+            backfill_portal.run(2)
+        except Exception as ex:
+            print(f"[기록 채우기 건너뜀] {ex}")
     if os.getenv("SEND_MAIL", "1") == "0":      # 수동 테스트 실행: 저장만 하고 발송은 생략
         print("[발송 생략] SEND_MAIL=0 → 메일·이슈·텔레그램을 보내지 않았습니다 (briefing.html과 누적 저장만 수행).")
         return
