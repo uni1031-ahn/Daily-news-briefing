@@ -42,6 +42,9 @@ jobs:
           # 2차 수집(네이버 뉴스 검색). 키가 없으면 2차만 건너뛰고 1차 브리핑은 정상 발송
           NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
           NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          # 포털(보험 인사이트 포털)로 오늘 기사 보내기. 값이 없으면 건너뜁니다
+          PORTAL_URL: ${{ secrets.PORTAL_URL }}
+          SYNC_TOKEN: ${{ secrets.SYNC_TOKEN }}
 
       - name: 누적 데이터 저장 (data/ 커밋)
         if: ${{ !cancelled() }}
