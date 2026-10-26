@@ -24,7 +24,8 @@ def run(days=35):
                 if not (d and t and d >= since) or r.get("id") in seen:
                     continue
                 seen.add(r.get("id"))
-                items.append({"id": r.get("id"), "d": d, "t": t, "s": (r.get("desc") or "")[:200], "u": r.get("link") or ""})
+                items.append({"id": r.get("id"), "d": d, "t": t, "s": (r.get("desc") or "")[:200], "u": r.get("link") or "",
+                              "f": r.get("field") or "", "src": r.get("source") or "", "c": r.get("cat") or "", "sec": r.get("sec") or ""})
     days_n = len({x["d"] for x in items})
     print(f"[기록 채우기] 최근 {days}일 기사 {len(items)}건 ({days_n}일치)를 보냅니다")
     try:

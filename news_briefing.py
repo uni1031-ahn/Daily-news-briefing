@@ -974,7 +974,7 @@ ARCHIVE_ON = os.getenv("ARCHIVE", "1") != "0"
 ARCHIVE_DIR = os.getenv("ARCHIVE_DIR", "data/articles")
 ARCHIVE_DESC_CHARS = int(os.getenv("ARCHIVE_DESC_CHARS", "150") or "150")
 ARCHIVE_COLS = ["id", "first_seen", "pub", "field", "source", "title", "link", "desc",
-                "cat", "cat_how", "cluster", "cluster_size", "in_briefing", "buzz"]
+                "cat", "cat_how", "cluster", "cluster_size", "in_briefing", "buzz", "sec"]
 
 
 def article_id(field: str, source: str, title: str) -> str:
@@ -1013,8 +1013,18 @@ def archive_articles(all_clusters, chosen_ids):
                     "cluster": cid, "cluster_size": len(c["articles"]),
                     "in_briefing": 1 if id(c) in chosen_ids else 0,
                     "buzz": c.get("buzz", ""),
+                    "sec": "|".join((a.get("cat_raw") or a.get("sec_raw") or [])[:3])[:60],   # 신문사 섹션명(기획·오피니언 구분용)
                 })
     os.makedirs(ARCHIVE_DIR, exist_ok=True)
+    if os.path.exists(cur_path):        # 예전 파일에 'sec' 칸이 없으면 칸을 추가해 다시 저장 (기존 내용은 그대로)
+        with open(cur_path, encoding="utf-8-sig", newline="") as f:
+            old = list(csv.DictReader(f))
+            hdr = old and list(old[0].keys())
+        if old and "sec" not in hdr:
+            with open(cur_path, "w", encoding="utf-8-sig", newline="") as f:
+                w0 = csv.DictWriter(f, fieldnames=ARCHIVE_COLS, extrasaction="ignore", restval="")
+                w0.writeheader()
+                w0.writerows(old)
     is_new = not os.path.exists(cur_path)
     # 새 파일만 BOM(utf-8-sig)을 붙여 엑셀에서 한글이 깨지지 않게 함 (이어쓰기는 BOM 없이)
     with open(cur_path, "w" if is_new else "a", encoding="utf-8-sig" if is_new else "utf-8", newline="") as f:
@@ -1022,6 +1032,9 @@ def archive_articles(all_clusters, chosen_ids):
         if is_new:
             w.writeheader()
         w.writerows(rows)
+    secs = collections.Counter((r["source"], r["sec"] or "(없음)") for r in rows if r["source"] in ("보험저널", "보험매일", "한국보험신문"))
+    for (s_, sec_), n_ in secs.most_common(12):
+        print(f"[섹션진단] {s_} · {sec_} · {n_}건")
     print(f"[누적저장] 신규 {len(rows)}건 저장 (이번 수집 {total}건 중 기존 {total - len(rows)}건은 중복) → {cur_path}")
 
 
@@ -1047,6 +1060,7 @@ def export_portal(sections):
                 "title": a["title"], "link": c.get("url", a["link"]),
                 "source": srcs[0] if srcs else a["source"], "sources": srcs,
                 "summary": c.get("summary", "") or "", "buzz": c.get("buzz", 0) or 0, "pub": pub,
+                "sec": "|".join((a.get("cat_raw") or a.get("sec_raw") or [])[:3])[:60],
             })
     try:
         for k in range(0, len(items), 200):
