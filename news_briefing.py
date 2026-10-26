@@ -71,10 +71,8 @@ SOURCES = {
         "의협신문": "doctorsnews.co.kr",
         "의사신문": "doctorstimes.com",
         "청년의사": "docdocdoc.co.kr",
-        "메디컬타임즈": "medicaltimes.com",
         "메디게이트뉴스": "medigatenews.com",
         "데일리메디": "dailymedi.com",
-        "더메디컬": "themedical.co.kr",
         "메디파나신문": "medipana.com",
     },
 }
