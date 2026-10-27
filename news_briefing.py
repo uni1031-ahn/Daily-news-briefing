@@ -634,7 +634,7 @@ def gemini_summary(title: str, text: str) -> str:
         return ""
 
 
-CLAUDE_STATS = {"ok": 0, "fail": 0}
+CLAUDE_STATS = {"ok": 0, "fail": 0, "body": 0, "desc_only": 0, "none": 0, "google": 0, "empty": 0}
 
 
 def claude_summary(title: str, texts, other_titles=()) -> str:
@@ -664,6 +664,8 @@ def claude_summary(title: str, texts, other_titles=()) -> str:
         out = "".join(b.get("text", "") for b in r.json().get("content", [])).strip()
         if out:
             CLAUDE_STATS["ok"] += 1
+        else:
+            CLAUDE_STATS["empty"] += 1
         return out
     except Exception as ex:
         CLAUDE_STATS["fail"] += 1
@@ -690,7 +692,11 @@ def summarize(cl):
     url = resolve_url(a["link"])
     cl["url"] = url
     desc = next((x["desc"] for x in arts if len(x.get("desc", "")) > 30), "")
-    body = clean_text(fetch_body(url)) or clean_text(desc)
+    raw_body = clean_text(fetch_body(url))
+    body = raw_body or clean_text(desc)
+    if "news.google.com" in url:
+        CLAUDE_STATS["google"] += 1
+    CLAUDE_STATS["body" if len(raw_body) > 60 else ("desc_only" if len(body) > 60 else "none")] += 1
     texts = [body]
     if os.getenv("ANTHROPIC_API_KEY") and len(arts) > 1:       # 같은 사안의 다른 매체 기사 본문도 참고 (최대 2건)
         seen_src = {a["source"]}
@@ -1205,6 +1211,8 @@ def main():
 
     if os.getenv("ANTHROPIC_API_KEY"):
         print(f"[Claude 요약] 성공 {CLAUDE_STATS['ok']}건 · 실패 {CLAUDE_STATS['fail']}건 (실패분은 기존 방식으로 대체)")
+        S = CLAUDE_STATS
+        print(f"[요약진단] 본문 확보 {S['body']}건 · 본문 없이 RSS 요약문만 {S['desc_only']}건 · 둘 다 부족 {S['none']}건 · 구글뉴스 링크(본문 못 읽음) {S['google']}건 · Claude가 요약 거절 {S['empty']}건")
     if args.check:
         print("\n'수집실패'인 신문사는 SOURCES의 도메인을 확인해 수정하세요.")
         return
