@@ -566,6 +566,9 @@ def print_diagnostics(field, items, clusters):
 
 
 # ───────────────────────── 요약 ─────────────────────────
+_RESOLVE_ERR = {"n": 0}
+
+
 def resolve_url(link: str) -> str:
     if "news.google.com" not in link:
         return link
@@ -574,8 +577,12 @@ def resolve_url(link: str) -> str:
         r = gnewsdecoder(link, interval=1)
         if r.get("status"):
             return r["decoded_url"]
-    except Exception:
-        pass
+        why = str(r.get("message", r))[:120]
+    except Exception as e:
+        why = f"{type(e).__name__}: {str(e)[:100]}"
+    _RESOLVE_ERR["n"] += 1
+    if _RESOLVE_ERR["n"] <= 2:
+        print(f"[요약진단·구글링크] 실제 주소로 바꾸지 못함: {why}")
     return link
 
 
@@ -666,6 +673,8 @@ def claude_summary(title: str, texts, other_titles=()) -> str:
             CLAUDE_STATS["ok"] += 1
         else:
             CLAUDE_STATS["empty"] += 1
+            if CLAUDE_STATS["empty"] <= 4:       # 거절 사례 몇 건만 원인 확인용으로 출력
+                print(f"[요약진단·거절] 제목={title[:40]} · 본문 {len(texts[0])}자 · 앞부분={texts[0][:110]!r}")
         return out
     except Exception as ex:
         CLAUDE_STATS["fail"] += 1
