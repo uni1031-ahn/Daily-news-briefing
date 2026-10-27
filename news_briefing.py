@@ -641,6 +641,7 @@ def gemini_summary(title: str, text: str) -> str:
         return ""
 
 
+SRC_STATS = {}      # 신문사별 원문 읽기 결과: [본문 읽음, 짧은 소개문만, 둘 다 부족]
 CLAUDE_STATS = {"ok": 0, "fail": 0, "body": 0, "desc_only": 0, "none": 0, "google": 0, "empty": 0}
 
 
@@ -719,7 +720,10 @@ def summarize(cl):
     body = raw_body or clean_text(desc)
     if "news.google.com" in url:
         CLAUDE_STATS["google"] += 1
-    CLAUDE_STATS["body" if len(raw_body) > 60 else ("desc_only" if len(body) > 60 else "none")] += 1
+    kind = "body" if len(raw_body) > 60 else ("desc_only" if len(body) > 60 else "none")
+    CLAUDE_STATS[kind] += 1
+    st = SRC_STATS.setdefault(a.get("source") or "(출처 없음)", [0, 0, 0])
+    st[("body", "desc_only", "none").index(kind)] += 1
     texts = [body]
     if os.getenv("ANTHROPIC_API_KEY") and len(arts) > 1:       # 같은 사안의 다른 매체 기사 본문도 참고 (최대 2건)
         seen_src = {a["source"]}
@@ -746,9 +750,13 @@ def drop_repeated_summaries(clusters):
         return (c.get("summary") or "").lstrip("| ").strip()[:30]
     cnt = collections.Counter(key(c) for c in clusters if c.get("summary"))
     removed = 0
-    for c in clusters:
+    kept = set()
+    for c in clusters:          # 같은 요약이 여러 건이면 한 건(대표)은 남기고 나머지만 비움
         k = key(c)
         if k and cnt[k] >= 2:
+            if k not in kept:
+                kept.add(k)
+                continue
             c["summary"] = ""
             removed += 1
     if removed:
@@ -1255,6 +1263,10 @@ def main():
             RUN_INFO.update(note=f"2차 수집 오류: {ex}", warn=True)
             print(f"[2차] 오류로 건너뜀: {ex}", file=sys.stderr)
 
+    if SRC_STATS:
+        print("[매체별 원문 읽기] 신문사 · 본문 읽음 / 짧은 소개문만 / 둘 다 부족 (읽기 성공률)")
+        for src, (b, d, n) in sorted(SRC_STATS.items(), key=lambda x: (x[1][0] / max(sum(x[1]), 1), -sum(x[1]))):
+            print(f"   {src}: {b} / {d} / {n}  ({round(100 * b / max(b + d + n, 1))}%)")
     text_body, _ = build(sections)
     html_body = build_email_html(sections)
     with open("briefing.html", "w", encoding="utf-8") as f:
