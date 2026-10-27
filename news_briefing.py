@@ -575,7 +575,7 @@ def resolve_url(link: str) -> str:
     try:
         from googlenewsdecoder import gnewsdecoder
         r = gnewsdecoder(link, interval=1)
-        if r.get("status"):
+        if (r.get("status") or r.get("success")) and r.get("decoded_url"):   # 라이브러리 버전에 따라 성공 표시 이름이 다름
             return r["decoded_url"]
         why = str(r.get("message", r))[:120]
     except Exception as e:
@@ -658,23 +658,33 @@ def claude_summary(title: str, texts, other_titles=()) -> str:
               "- 제목을 그대로 반복하지 마세요. 설명 없이 요약문만 출력하세요.\n"
               "- 본문이 요약할 만한 기사가 아니면 빈 문자열만 출력하세요.\n\n"
               f"제목: {title}\n" + (f"같은 사안의 다른 제목:\n{others}\n" if others else "") + f"\n본문:\n{body}")
-    try:
+    def _call(p):
         r = requests.post(os.getenv("ANTHROPIC_URL", "https://api.anthropic.com/v1/messages"), timeout=45,
                           headers={"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"},
-                          json={"model": os.getenv("CLAUDE_MODEL", "claude-haiku-5-5"), "max_tokens": 400,
-                                "messages": [{"role": "user", "content": prompt}]})
+                          json={"model": os.getenv("CLAUDE_MODEL", "claude-haiku-5-5"), "max_tokens": 600,
+                                "messages": [{"role": "user", "content": p}]})
+        return r
+    try:
+        r = _call(prompt)
         if r.status_code != 200:
             CLAUDE_STATS["fail"] += 1
             if CLAUDE_STATS["fail"] <= 2:
                 print(f"[Claude 요약] 오류 {r.status_code}: {r.text[:200]}")
             return ""
-        out = "".join(b.get("text", "") for b in r.json().get("content", [])).strip()
+        j = r.json()
+        out = "".join(b.get("text", "") for b in j.get("content", []) if b.get("type", "text") == "text").strip()
+        if not out:       # 빈 답이면 원인을 남기고, 더 단순한 지시로 한 번 더 요청
+            CLAUDE_STATS["empty"] += 1
+            if CLAUDE_STATS["empty"] <= 3:
+                print(f"[요약진단·빈답] 제목={title[:30]} · 끝난 이유={j.get('stop_reason')} · 블록={[b.get('type') for b in j.get('content', [])]} · 사용량={j.get('usage')}")
+            simple = f"다음 기사를 한국어 2~3문장으로 요약해 주세요. 요약문만 출력하세요.\n\n제목: {title}\n\n{body[:3500]}"
+            r2 = _call(simple)
+            if r2.status_code == 200:
+                out = "".join(b.get("text", "") for b in r2.json().get("content", []) if b.get("type", "text") == "text").strip()
+                if out:
+                    CLAUDE_STATS["retry_ok"] = CLAUDE_STATS.get("retry_ok", 0) + 1
         if out:
             CLAUDE_STATS["ok"] += 1
-        else:
-            CLAUDE_STATS["empty"] += 1
-            if CLAUDE_STATS["empty"] <= 4:       # 거절 사례 몇 건만 원인 확인용으로 출력
-                print(f"[요약진단·거절] 제목={title[:40]} · 본문 {len(texts[0])}자 · 앞부분={texts[0][:110]!r}")
         return out
     except Exception as ex:
         CLAUDE_STATS["fail"] += 1
@@ -1221,7 +1231,7 @@ def main():
     if os.getenv("ANTHROPIC_API_KEY"):
         print(f"[Claude 요약] 성공 {CLAUDE_STATS['ok']}건 · 실패 {CLAUDE_STATS['fail']}건 (실패분은 기존 방식으로 대체)")
         S = CLAUDE_STATS
-        print(f"[요약진단] 본문 확보 {S['body']}건 · 본문 없이 RSS 요약문만 {S['desc_only']}건 · 둘 다 부족 {S['none']}건 · 구글뉴스 링크(본문 못 읽음) {S['google']}건 · Claude가 요약 거절 {S['empty']}건")
+        print(f"[요약진단] 본문 확보 {S['body']}건 · 본문 없이 RSS 요약문만 {S['desc_only']}건 · 둘 다 부족 {S['none']}건 · 구글뉴스 링크(본문 못 읽음) {S['google']}건 · 첫 요청에서 빈 답 {S['empty']}건(재요청으로 살린 것 {S.get('retry_ok', 0)}건)")
     if args.check:
         print("\n'수집실패'인 신문사는 SOURCES의 도메인을 확인해 수정하세요.")
         return
