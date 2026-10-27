@@ -659,10 +659,14 @@ def claude_summary(title: str, texts, other_titles=()) -> str:
               "- 본문이 요약할 만한 기사가 아니면 빈 문자열만 출력하세요.\n\n"
               f"제목: {title}\n" + (f"같은 사안의 다른 제목:\n{others}\n" if others else "") + f"\n본문:\n{body}")
     def _call(p):
-        r = requests.post(os.getenv("ANTHROPIC_URL", "https://api.anthropic.com/v1/messages"), timeout=45,
-                          headers={"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"},
-                          json={"model": os.getenv("CLAUDE_MODEL", "claude-haiku-5-5"), "max_tokens": 600,
-                                "messages": [{"role": "user", "content": p}]})
+        # 요약에는 내부 추론이 필요 없고, 켜 두면 답 쓸 분량을 추론이 다 써 버려 빈 답이 됨 → 추론을 끄고, 여유 분량을 둠
+        url = os.getenv("ANTHROPIC_URL", "https://api.anthropic.com/v1/messages")
+        hd = {"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"}
+        body = {"model": os.getenv("CLAUDE_MODEL", "claude-haiku-5-5"), "max_tokens": 2000,
+                "messages": [{"role": "user", "content": p}]}
+        r = requests.post(url, timeout=60, headers=hd, json={**body, "thinking": {"type": "disabled"}})
+        if r.status_code == 400:          # 이 모델이 추론 끄기 설정을 받지 않으면 설정 없이 다시
+            r = requests.post(url, timeout=60, headers=hd, json=body)
         return r
     try:
         r = _call(prompt)
