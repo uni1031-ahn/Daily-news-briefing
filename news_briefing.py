@@ -52,7 +52,7 @@ HOURS = int(os.getenv("HOURS", "24") or "24")      # 최근 몇 시간 기사 �
 SIM_THRESHOLD = 0.8                                # 제목 유사도 기준(0~1)
 LAYOUT = (os.getenv("LAYOUT", "category") or "category").strip()   # category | buzz_recent
 PER_CATEGORY = int(os.getenv("PER_CATEGORY", "5") or "5")          # 카테고리별 표시 건수
-SUMMARY_CHARS = int(os.getenv("SUMMARY_CHARS", "130") or "130")    # 요약문 최대 글자 수 (줄이면 메일이 촘촘해짐)
+SUMMARY_CHARS = int(os.getenv("SUMMARY_CHARS", "230") or "230")    # 요약문 최대 글자 수 (줄이면 메일이 촘촘해짐)
 ROW_PAD = int(os.getenv("ROW_PAD", "4") or "4")                    # 표 행의 위아래 여백(px). 작을수록 촘촘함
 RUN_INFO = {"note": "", "warn": False}     # 메일 상단에 표시할 수집 현황(2차 수집 모듈이 채움)
 BUILD = "v3.11-portal"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
@@ -634,6 +634,44 @@ def gemini_summary(title: str, text: str) -> str:
         return ""
 
 
+CLAUDE_STATS = {"ok": 0, "fail": 0}
+
+
+def claude_summary(title: str, texts, other_titles=()) -> str:
+    """Claude(Haiku)로 기사 묶음을 2~3문장으로 요약. 키가 없거나 실패하면 빈 문자열(→ 기존 방식으로 대체)."""
+    key = (os.getenv("ANTHROPIC_API_KEY") or "").strip()
+    texts = [t for t in texts if t and len(t) > 60]
+    if not key or not texts:
+        return ""
+    body = texts[0][:3500] + "".join(f"\n\n[같은 사안을 다룬 다른 기사]\n{t[:1200]}" for t in texts[1:3])
+    others = "\n".join(f"- {t}" for t in list(other_titles)[:4])
+    prompt = ("다음 보험·의료 뉴스 기사를 한국어 2~3문장(180자 이내)으로 요약하세요.\n"
+              "- 무슨 일이 있었는지(누가·무엇을), 핵심 수치나 대상, 업계에 주는 의미 순으로 쓰세요.\n"
+              "- 기사 본문에 없는 내용은 쓰지 말고, 광고·메뉴·저작권 문구는 무시하세요.\n"
+              "- 제목을 그대로 반복하지 마세요. 설명 없이 요약문만 출력하세요.\n"
+              "- 본문이 요약할 만한 기사가 아니면 빈 문자열만 출력하세요.\n\n"
+              f"제목: {title}\n" + (f"같은 사안의 다른 제목:\n{others}\n" if others else "") + f"\n본문:\n{body}")
+    try:
+        r = requests.post(os.getenv("ANTHROPIC_URL", "https://api.anthropic.com/v1/messages"), timeout=45,
+                          headers={"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"},
+                          json={"model": os.getenv("CLAUDE_MODEL", "claude-haiku-5-5"), "max_tokens": 400,
+                                "messages": [{"role": "user", "content": prompt}]})
+        if r.status_code != 200:
+            CLAUDE_STATS["fail"] += 1
+            if CLAUDE_STATS["fail"] <= 2:
+                print(f"[Claude 요약] 오류 {r.status_code}: {r.text[:200]}")
+            return ""
+        out = "".join(b.get("text", "") for b in r.json().get("content", [])).strip()
+        if out:
+            CLAUDE_STATS["ok"] += 1
+        return out
+    except Exception as ex:
+        CLAUDE_STATS["fail"] += 1
+        if CLAUDE_STATS["fail"] <= 2:
+            print(f"[Claude 요약] 실패: {ex}")
+        return ""
+
+
 def shorten(text: str, n: int) -> str:
     text = re.sub(r"\s+", " ", text or "").strip()
     if len(text) <= n:
@@ -653,10 +691,23 @@ def summarize(cl):
     cl["url"] = url
     desc = next((x["desc"] for x in arts if len(x.get("desc", "")) > 30), "")
     body = clean_text(fetch_body(url)) or clean_text(desc)
+    texts = [body]
+    if os.getenv("ANTHROPIC_API_KEY") and len(arts) > 1:       # 같은 사안의 다른 매체 기사 본문도 참고 (최대 2건)
+        seen_src = {a["source"]}
+        for x in arts[1:]:
+            if len(texts) >= 3:
+                break
+            if x["source"] in seen_src or not x.get("link") or "news.google.com" in x["link"]:
+                continue
+            seen_src.add(x["source"])
+            t = clean_text(fetch_body(x["link"]))
+            if t:
+                texts.append(t)
     cl["summary"] = shorten(
-        gemini_summary(a["title"], body) or extractive_summary(body, max_chars=400) or clean_text(desc),
+        claude_summary(a["title"], texts, [x["title"] for x in arts[1:5]])
+        or gemini_summary(a["title"], body) or extractive_summary(body, max_chars=400) or clean_text(desc),
         SUMMARY_CHARS)
-    time.sleep(1)
+    time.sleep(0.3 if os.getenv("ANTHROPIC_API_KEY") else 1)
 
 
 # ───────────────────────── 포맷 ─────────────────────────
@@ -1152,6 +1203,8 @@ def main():
             if recent_top:
                 sections[f"{field} 최신"] = recent_top
 
+    if os.getenv("ANTHROPIC_API_KEY"):
+        print(f"[Claude 요약] 성공 {CLAUDE_STATS['ok']}건 · 실패 {CLAUDE_STATS['fail']}건 (실패분은 기존 방식으로 대체)")
     if args.check:
         print("\n'수집실패'인 신문사는 SOURCES의 도메인을 확인해 수정하세요.")
         return
