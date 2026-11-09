@@ -638,6 +638,14 @@ def main():
         for inst in INSTITUTIONS:
             fetched[inst["name"]] = futs[inst["name"]].result()
 
+    # 접속 실패한 기관은 잠시 후 한 번 더 시도 (일시적 지연 대비)
+    retry = [i for i in INSTITUTIONS if not fetched[i["name"]][0]["ok"] and "접속 실패" in fetched[i["name"]][0]["error"]]
+    if retry:
+        print(f"[재시도] 접속 실패 {len(retry)}곳을 60초 후 다시 시도: {', '.join(i['name'] for i in retry)}")
+        time.sleep(60)
+        for inst in retry:
+            fetched[inst["name"]] = fetch_institution(inst, args.debug_dir or None)
+
     results, sessions, all_shown = [], {}, []
     for inst in INSTITUTIONS:
         st, items, session = fetched[inst["name"]]
