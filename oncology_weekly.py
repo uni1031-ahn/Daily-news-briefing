@@ -17,7 +17,7 @@ oncology_weekly.py — "항암 주간 요약" 생성기 (표준 라이브러리�
 
 환경변수
   ANTHROPIC_API_KEY   (선택) 있으면 한국어 제목/요약을 Claude로 생성
-  ANTHROPIC_MODEL     (선택) 기본 claude-sonnet-5-5
+  CLAUDE_MODEL        (선택) 기본 claude-haiku-5-5 (기존 브리핑과 동일)
   NAVER_CLIENT_ID / NAVER_CLIENT_SECRET   (선택) 국내 뉴스 보강
   OUT_DIR             (선택) 기본 data/oncology
 """
@@ -47,9 +47,7 @@ GN_QUERIES = [
     ("유방암 치료제", "ko"), ("항암 임상 3상", "ko"), ("항암제 급여 건강보험", "ko"),
 ]
 # 직접 RSS (실패해도 무시. 주소는 바뀔 수 있으니 로그에서 0건이면 교체)
-DIRECT_FEEDS = [
-    ("FDA Press", "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/press-releases/rss.xml"),
-    ("FDA Oncology", "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/oncology-cancer-hematologic-malignancies-approval-notifications/rss.xml"),
+DIRECT_FEEDS = [   # 직접 RSS (FDA 주소는 404라 제거. site:fda.gov 구글뉴스 질의가 대신함). 필요하면 (이름, 주소) 추가
 ]
 
 # ---------------------------------------------------------------- 분류
@@ -128,7 +126,8 @@ def gn_url(q, lang):
             + f"&hl={hl}&gl={gl}&ceid={ceid}")
 
 def collect_naver(queries):
-    cid, sec = os.environ.get("NAVER_CLIENT_ID"), os.environ.get("NAVER_CLIENT_SECRET")
+    cid = (os.environ.get("NAVER_CLIENT_ID") or "").strip()
+    sec = (os.environ.get("NAVER_CLIENT_SECRET") or "").strip()
     if not (cid and sec): return []
     out = []
     for q in queries:
@@ -224,9 +223,9 @@ def load_prev(week_label):
 
 # ---------------------------------------------------------------- AI 요약
 def ai_summarize(top, breast):
-    key = os.environ.get("ANTHROPIC_API_KEY")
+    key = (os.environ.get("ANTHROPIC_API_KEY") or "").strip()
     if not key: return None
-    model = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-5-5")
+    model = os.environ.get("CLAUDE_MODEL") or os.environ.get("ANTHROPIC_MODEL") or "claude-haiku-5-5"
     items = [dict(id=c["id"], title=c["title"], snippet=c["snippet"], sources=c["sources"][:4]) for c in top + breast]
     prompt = (
         "다음은 이번 주 항암 분야 기사 제목/스니펫입니다. 제공된 텍스트에 있는 사실만 사용하세요. "
@@ -234,18 +233,30 @@ def ai_summarize(top, breast):
         "JSON만 출력: {\"headline\": \"이번 주 흐름 1~2문장(한국어)\", "
         "\"items\": [{\"id\": 번호, \"title_ko\": \"한국어 제목(영문 기사는 번역)\", \"summary\": \"1~2문장 한국어 요약\"}]}\n\n"
         + json.dumps(items, ensure_ascii=False))
-    body = json.dumps({"model": model, "max_tokens": 4000,
-                       "messages": [{"role": "user", "content": prompt}]}).encode()
-    req = urllib.request.Request("https://api.anthropic.com/v1/messages", data=body, method="POST",
-        headers={"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"})
+    base = {"model": model, "max_tokens": 8000, "messages": [{"role": "user", "content": prompt}]}
+    hd = {"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"}
+
+    def call(extra):
+        req = urllib.request.Request("https://api.anthropic.com/v1/messages", method="POST", headers=hd,
+                                     data=json.dumps({**base, **extra}).encode())
+        with urllib.request.urlopen(req, timeout=180) as r:
+            return json.loads(r.read())
     try:
-        with urllib.request.urlopen(req, timeout=120) as r:
-            txt = json.loads(r.read())["content"][0]["text"]
+        try:   # 추론 블록이 앞에 붙어 본문이 밀리는 것을 막기 위해 추론을 끔 (기존 브리핑과 같은 방식)
+            j = call({"thinking": {"type": "disabled"}})
+        except urllib.error.HTTPError as e:
+            if e.code != 400: raise
+            j = call({})   # 이 모델이 추론 끄기 설정을 받지 않으면 설정 없이 다시
+        txt = "".join(b.get("text", "") for b in j.get("content", []) if b.get("type") == "text")
         m = re.search(r"\{.*\}", txt, re.S)
+        if not m:
+            raise ValueError(f"JSON 없음 · 블록={[b.get('type') for b in j.get('content', [])]} · 끝난 이유={j.get('stop_reason')}")
         return json.loads(m.group(0))
+    except urllib.error.HTTPError as e:
+        log(f"[ai] 요약 실패 → 스니펫으로 대체: HTTP {e.code} {e.read()[:200]!r}")
     except Exception as e:
         log(f"[ai] 요약 실패 → 스니펫으로 대체: {e}")
-        return None
+    return None
 
 def apply_ai(clusters, ai):
     if not ai: return ""
