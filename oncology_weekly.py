@@ -97,7 +97,7 @@ STRICT_ONC_RE = re.compile(
     r"암\b|항암|종양|림프종|백혈병|골수종|흑색종|유방암|폐암|대장암|위암|간암|췌장암|전립선암|난소암", re.I)
 ROUNDUP_RE = re.compile(r"\bbrief\b|biopharma brief|round-?up|week in review|weekly (news|digest|update)|news digest|브리프|모음|뉴스 ?정리|주간 ?소식|이번 ?주 ?소식", re.I)
 AUTOIMM_RE = re.compile(r"lupus|autoimmun|multiple sclerosis|myasthenia|rheumat|루푸스|자가면역|다발성 ?경화|중증근무력|류마티스", re.I)
-BREAST_RE = re.compile(r"breast|HER2|trastuzumab|CDK4|유방", re.I)
+BREAST_RE = re.compile(r"breast|유방", re.I)   # HER2·CDK4 만으로는 위암·식도암 등도 걸리므로 '유방'이 들어간 기사만
 TAG_BOOST = [(re.compile(r"FDA|approv|승인|허가", re.I), 2),
              (re.compile(r"Phase 3|3상|topline", re.I), 2),
              (re.compile(r"acquir|인수|billion|조원|억 ?달러", re.I), 1)]
@@ -470,7 +470,8 @@ def main():
             parts = [f"{CAT_LABEL[k]} {v}건" for k, v in sorted(n_cat.items(), key=lambda kv: -kv[1])[:3]]
             headline = f"이번 주 항암 관련 {len(clusters)}개 이슈 중 " + ", ".join(parts) + " 순으로 많았습니다."
         # 유방암 워치: 상위에 이미 오른 건 제외하고 별도 3건 (중복 지목분도 제외)
-        breast = [c for c in clusters if c["breast"] and c not in top and c.get("dup_of") is None][:3]
+        breast = [c for c in clusters if c["breast"] and c not in top and c.get("dup_of") is None
+                  and (c.get("title_ko") or not ai_used)][:3]     # AI 사용 시 한국어 제목이 있는 것만(영문 원제 방지)
     if not args.demo:
         headline = normalize_all(clusters, headline)
     section = render_section(week_label, start, end, headline, top, breast, trend, prev, args.demo, ai_used)
