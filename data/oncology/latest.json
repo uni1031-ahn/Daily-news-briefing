@@ -2,16 +2,16 @@
  "week": "2026-W46",
  "start": "2026-11-02",
  "end": "2026-11-09",
- "headline": "이번 주 항암 분야에서는 삼성바이오에피스의 키트루다 바이오시밀러 임상 결과, J&J의 Rybrevant Faspro 두경부암 승인, 그리고 여러 표적·세포치료제 및 유방암 치료 관련 소식이 주목받았습니다.",
+ "headline": "이번 주 항암 분야는 삼성바이오에피스의 키트루다 바이오시밀러 임상 3상 결과 발표와 J&J 리브리반트 파스프로의 두경부암 FDA 승인 소식이 주를 이뤘고, 이 외에 CAR-T, 간세포암 표적항암제, 유방암 치료 등 다양한 임상·허가 소식이 함께 보도되었습니다.",
  "demo": false,
  "trend": {
-  "CAR-T": 53,
+  "CAR-T": 52,
   "ADC": 14,
   "bispecific": 13,
   "radioligand": 6,
   "KRAS": 2,
   "PD-1": 9,
-  "HER2": 12,
+  "HER2": 11,
   "TROP2": 1,
   "in vivo CAR-T": 2,
   "GLP-1": 1,
@@ -22,7 +22,7 @@
  },
  "top": [
   {
-   "id": 16,
+   "id": 15,
    "title": "삼성바이오에피스, 미국 면역항암학회서 '키트루다' 바이오시밀러 임상3상 결과 발표 - 비즈니스포스트",
    "link": "https://news.google.com/rss/articles/CBMic0FVX3lxTFB0V3FlcFFUcnJhVmZkZ29QblJTSmExQnRqek8wR0N0VV9leGlLejAxYmtxcGNGYk9ZN3ppUUdXaVBwbUE5cldRbzRzek5Oc1J4eUg0aUFVYlBTbHJSNVlrLUJ3QmpSZWxoX1drZTlrSC1ucGM?oc=5",
    "when": "2026-11-09T10:55:10+09:00",
@@ -35,7 +35,7 @@
    "snippet": "삼성바이오에피스, 미국 면역항암학회서 '키트루다' 바이오시밀러 임상3상 결과 발표    비즈니스포스트",
    "cat": "io",
    "breast": false,
-   "score": 9.93,
+   "score": 9.92,
    "lang": "ko",
    "members": [
     {
@@ -65,45 +65,46 @@
     }
    ],
    "title_ko": "삼성바이오에피스, 미국 면역항암학회서 '키트루다' 바이오시밀러 임상3상 결과 발표",
-   "summary": "삼성바이오에피스가 미국 면역항암학회에서 '키트루다' 바이오시밀러의 임상3상 결과를 발표했다는 내용입니다. 구체적인 수치는 제목·스니펫에 없습니다."
+   "summary": "삼성바이오에피스가 미국 면역항암학회에서 키트루다 바이오시밀러 임상 3상 결과를 발표했습니다. 같은 임상 결과는 여러 매체에서 함께 보도되었습니다."
   },
   {
-   "id": 17,
-   "title": "삼성바이오에피스, 美 면역항암학회서 SB27 임상 3상 동등성 확인 - 주간한국",
-   "link": "https://news.google.com/rss/articles/CBMidEFVX3lxTE5JbXdyYmowVVVrejJ6MVJaZFE5cjhLeEhMek54Rll6NldCdEM5bE5SMWh6MkNCdUMxUXhtRlBBanNPckNBdEJGbHBmN3ZON1g5bHpIMUxrTmpGN3hoVWtqcU5XRElVaWRUdkc2aHVRZWYxNjNa0gF0QVVfeXFMTkltd3JiajBVVWt6MnoxUlpkUTlyOEt4SEx6TnhGWXo2V0J0QzlsTlIxaHoyQ0J1QzFReG1GUEFqc09yQ0F0QkZscGY3dk43WDlsekgxTGtOakY3eGhVa2pxTldESVVpZFR2RzZodVFlZjE2M1o?oc=5",
-   "when": "2026-11-09T10:27:31+09:00",
-   "source": "주간한국",
+   "id": 1,
+   "title": "앱클론, 종근당과 CAR-T 치료제 네스페셀 국내 독점 판매 계약 - 뉴스1",
+   "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE9qTkNUSmJPR0dCU3d6VWFuaUhERUNORjctQi0xS2tYbW9xTlVyNDNJcFRlTUtEU0lBNXZyQjVndUpKM3Q0bzJmSm1sc0ZJaEVKa3J0SVo2UFJFaUNxZkdfOQ?oc=5",
+   "when": "2026-11-09T14:51:31+09:00",
+   "source": "뉴스1",
    "sources": [
-    "메디칼업저버",
-    "주간한국"
+    "뉴스1",
+    "메디컬투데이",
+    "서울경제TV"
    ],
-   "snippet": "삼성바이오에피스, 美 면역항암학회서 SB27 임상 3상 동등성 확인    주간한국",
-   "cat": "io",
+   "snippet": "앱클론, 종근당과 CAR-T 치료제 네스페셀 국내 독점 판매 계약    뉴스1",
+   "cat": "cart",
    "breast": false,
-   "score": 7.92,
+   "score": 7.97,
    "lang": "ko",
    "members": [
     {
-     "title": "삼성바이오에피스, 美 면역항암학회서 SB27 임상 3상 동등성 확인 - 주간한국",
-     "link": "https://news.google.com/rss/articles/CBMidEFVX3lxTE5JbXdyYmowVVVrejJ6MVJaZFE5cjhLeEhMek54Rll6NldCdEM5bE5SMWh6MkNCdUMxUXhtRlBBanNPckNBdEJGbHBmN3ZON1g5bHpIMUxrTmpGN3hoVWtqcU5XRElVaWRUdkc2aHVRZWYxNjNa0gF0QVVfeXFMTkltd3JiajBVVWt6MnoxUlpkUTlyOEt4SEx6TnhGWXo2V0J0QzlsTlIxaHoyQ0J1QzFReG1GUEFqc09yQ0F0QkZscGY3dk43WDlsekgxTGtOakY3eGhVa2pxTldESVVpZFR2RzZodVFlZjE2M1o?oc=5",
-     "source": "주간한국"
+     "title": "앱클론, 종근당과 CAR-T 치료제 네스페셀 국내 독점 판매 계약 - 뉴스1",
+     "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE9qTkNUSmJPR0dCU3d6VWFuaUhERUNORjctQi0xS2tYbW9xTlVyNDNJcFRlTUtEU0lBNXZyQjVndUpKM3Q0bzJmSm1sc0ZJaEVKa3J0SVo2UFJFaUNxZkdfOQ?oc=5",
+     "source": "뉴스1"
     },
     {
-     "title": "삼성바이오에피스, 美 면역항암학회서 SB27 임상 3상 동등성 확인 - 주간한국",
-     "link": "https://news.google.com/rss/articles/CBMicEFVX3lxTE5lSkgzbG5wYVktMWtOV2s1X3JWMjVldV9nNWdyQXF4aGhwaHluUXJlRWtQeHg1ZEs4bFdpZHhnTVdKT1NlUjJtenVXMmhBOTNkbkhJWlVSWmxGeU5mZHRnZlBvem1qVENGOU9FWjh3YnLSAXRBVV95cUxOSW13cmJqMFVVa3oyejFSWmRROXI4S3hITHpOeEZZejZXQnRDOWxOUjFoejJDQnVDMVF4bUZQQWpzT3JDQXRCRmxwZjd2TjdYOWx6SDFMa05qRjd4aFVranFOV0RJVWlkVHZHNmh1UWVmMTYzWg?oc=5",
-     "source": "주간한국"
+     "title": "앱클론·종근당, CAR-T 치료제 '네스페셀' 국내 독점 판매 계약 - 서울경제TV",
+     "link": "https://news.google.com/rss/articles/CBMiZEFVX3lxTE0xYmtOUnA0MmxlTU9ZLTFqNE4wU2pPaFE0QVR1VXE4RWlPNHhkUVBNd2Zsbl83YTFwLTNmUXAzQlFqUFZfZTRHSEhLZnhZNlpkMzJlS214S0VkQVJFTkZQc1hzQjE?oc=5",
+     "source": "서울경제TV"
     },
     {
-     "title": "삼성바이오에피스, 美 면역항암학회서 SB27 임상3상 결과 발표 - 메디칼업저버",
-     "link": "https://news.google.com/rss/articles/CBMia0FVX3lxTE9PQ0VqU3lkNXBneEswb3I1aFZmTEJZa3ZEVUhfVEMtdFY4MzNUN3lVYXZycGwtMUdkMzdqbUdjTENmdkRpS1BBLXROOWRVenp3ODNFY2VuYmRPOVJ3T1VrRjlVT1VZdzBNcjlZ?oc=5",
-     "source": "메디칼업저버"
+     "title": "앱클론·종근당, CAR-T 치료제 '네스페셀' 국내 독점 판매 계약 - 메디컬투데이",
+     "link": "https://news.google.com/rss/articles/CBMibEFVX3lxTE82aUIzVVdULWlQNGF5ZGl2cXJGLURKSTJsQUxTNUVsZ25GQUUtakFEODU2eE8tbGlNRnZBX3NsdUtyaEM2VXNZdkd3QUtueVJFWDNmbXdPM0tqLWNvTzVEaXJxN0dwM2lqOHg5QQ?oc=5",
+     "source": "메디컬투데이"
     }
    ],
-   "title_ko": "삼성바이오에피스, 美 면역항암학회서 SB27 임상 3상 동등성 확인",
-   "summary": "미국 면역항암학회에서 SB27의 임상 3상 동등성이 확인되었다고 보도되었습니다. 세부 결과 수치는 제공된 텍스트에 없습니다."
+   "title_ko": "앱클론, 종근당과 CAR-T 치료제 네스페셀 국내 독점 판매 계약 체결",
+   "summary": "앱클론이 CAR-T 치료제 네스페셀의 국내 독점 판매를 위해 종근당과 계약을 맺었습니다."
   },
   {
-   "id": 57,
+   "id": 55,
    "title": "美카테시안, 중증근무력증 CAR-T 내년 1분기 3상 결과 발표…허가 신청 추진 - 더바이오",
    "link": "https://news.google.com/rss/articles/CBMicEFVX3lxTE5RTXhKeGNTQ0VWeFZESVhzckNPdjhWSURnQzliMXNsckZQTkRBTnhaT2VDeVJYendUejZob0I4ZXFlUTNQUjN0SWU2TzFVOG5sZDRuTmlINTl3UnQxbEU5b1UtNVBMa0NGQ1BBM1pvRHnSAXBBVV95cUxOUU14SnhjU0NFVnhWRElYc3JDT3Y4VklEZ0M5YjFzbHJGUE5EQU54Wk9lQ3lSWHp3VHo2aG9COGVxZVEzUFIzdEllNk8xVThubGQ0bk5pSDU5d1J0MWxFOW9VLTVQTGtDRkNQQTNab0R5?oc=5",
    "when": "2026-11-08T11:39:57+09:00",
@@ -114,7 +115,7 @@
    "snippet": "美카테시안, 중증근무력증 CAR-T 내년 1분기 3상 결과 발표…허가 신청 추진    더바이오",
    "cat": "reg",
    "breast": false,
-   "score": 7.61,
+   "score": 7.6,
    "lang": "ko",
    "members": [
     {
@@ -128,41 +129,11 @@
      "source": "더바이오"
     }
    ],
-   "title_ko": "미국 카테시안, 중증근무력증 CAR-T 내년 1분기 3상 결과 발표 예정…허가 신청 추진",
-   "summary": "카테시안이 중증근무력증 대상 CAR-T 치료제의 3상 결과를 내년 1분기에 발표하고 허가 신청을 추진한다는 내용입니다."
+   "title_ko": "미국 카테시안, 중증근무력증 CAR-T 내년 1분기 3상 결과 발표 및 허가 신청 추진",
+   "summary": "카테시안은 중증근무력증 CAR-T 치료제의 3상 결과를 내년 1분기에 발표하고 허가 신청을 추진할 계획입니다."
   },
   {
-   "id": 75,
-   "title": "Joanna Sadowska: FDA Approves J&J’s Dual-Targeted Therapy for Head and Neck Cancer - Oncodaily",
-   "link": "https://news.google.com/rss/articles/CBMiaEFVX3lxTFB3TmR1S2RMa1Bzd3VsU25JX3RUamhNVWU4N05uMTdwa2taNFRWOElvZGdoTjZIRGd4YXdlTmtoSFFoZ0pDenJYQWV1Nnd6X1VTWGw0SGF2bEhkZDdNMTFtNzRoYm4wZndi?oc=5",
-   "when": "2026-11-07T22:31:13+09:00",
-   "source": "Oncodaily",
-   "sources": [
-    "MedPage Today",
-    "Oncodaily"
-   ],
-   "snippet": "Joanna Sadowska: FDA Approves J&J’s Dual-Targeted Therapy for Head and Neck Cancer    Oncodaily",
-   "cat": "reg",
-   "breast": false,
-   "score": 7.42,
-   "lang": "en",
-   "members": [
-    {
-     "title": "Joanna Sadowska: FDA Approves J&J’s Dual-Targeted Therapy for Head and Neck Cancer - Oncodaily",
-     "link": "https://news.google.com/rss/articles/CBMiaEFVX3lxTFB3TmR1S2RMa1Bzd3VsU25JX3RUamhNVWU4N05uMTdwa2taNFRWOElvZGdoTjZIRGd4YXdlTmtoSFFoZ0pDenJYQWV1Nnd6X1VTWGw0SGF2bEhkZDdNMTFtNzRoYm4wZndi?oc=5",
-     "source": "Oncodaily"
-    },
-    {
-     "title": "FDA Approves Dual-Targeted Therapy for Head and Neck Cancer - MedPage Today",
-     "link": "https://news.google.com/rss/articles/CBMidkFVX3lxTE1wYUdBQlhPQVpOTzY5QWR6Ym5qenQ0cXpKbllzNmwzbjN5WEQ0akpQdDA2OXVQYXBPS1pJUVRRMXdIZkZaZ3dSREY3SElTc0tuLWd2N3VtQTctby1RandNVmgyVFdSeU94U1BNZXZuczJRY1ljVWc?oc=5",
-     "source": "MedPage Today"
-    }
-   ],
-   "title_ko": "FDA, J&J의 이중표적 치료제 두경부암 적응증 승인 (Oncodaily)",
-   "summary": "FDA가 J&J의 이중표적 치료제를 두경부암 적응증으로 승인했다는 보도입니다. 세부 임상 수치는 제목에 없습니다."
-  },
-  {
-   "id": 102,
+   "id": 101,
    "title": "FDA Approves J&J’s Rybrevant Faspro with Halozyme’s Enhanze for Head and Neck Cancer - Contract Pharma",
    "link": "https://news.google.com/rss/articles/CBMixgFBVV95cUxQeFF1T0FoMnUwNTdoYXV4UjdvNWFudGF2WEFJMThJVnJ0LTloTmpreV9IbUpiX3lPVXdieDNQTy0yWkc5ZHFZRTl4YlpBWlZDS2JRdmFRcVdBSnRQdXpEUER6MENGV1plS3pRVTdIaktoX01WQXYtaUpJVEVFNEt6ZEc1MXF4a3A3ekJ1dTVDcE94dFpNRHlJMkVoTkhUQmxsOUxTUU1ha1d2SWl3U1F3UnNPSVAzdmFsZUFMZ0xrdkdoTTlPMXc?oc=5",
    "when": "2026-11-07T03:25:56+09:00",
@@ -174,7 +145,7 @@
    "snippet": "FDA Approves J&J’s Rybrevant Faspro with Halozyme’s Enhanze for Head and Neck Cancer    Contract Pharma",
    "cat": "reg",
    "breast": false,
-   "score": 7.16,
+   "score": 7.15,
    "lang": "en",
    "members": [
     {
@@ -188,101 +159,11 @@
      "source": "BioPharm International"
     }
    ],
-   "title_ko": "FDA, J&J 'Rybrevant Faspro'·Halozyme 'Enhanze' 병용 두경부암 승인",
-   "summary": "FDA가 J&J의 Rybrevant Faspro를 Halozyme의 Enhanze와 함께 두경부암 치료제로 승인했다는 내용입니다."
+   "title_ko": "FDA, J&J 리브리반트 파스프로와 할로자임 엔하이즈 조합 두경부암 승인",
+   "summary": "FDA가 J&J의 리브리반트 파스프로를 할로자임의 엔하이즈와 함께 두경부암 치료제로 승인했습니다."
   },
   {
-   "id": 120,
-   "title": "Johnson & Johnson secures FDA approval for RYBREVANT FASPRO in head and neck cancer - Manufacturing Chemist",
-   "link": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxOUVF4am03YUNGd0hjU1p3MHRoZUt0QWE1cWpxSHo0Yzl6ajF0N2JNQjVkaE1QSGMtb2VkOFZraXRpTmpqYkRsMl9iOVpVVUtldll2ZDhMamV6Q2xtM1NDRGh6NmFYeDdlWTd5Sm9EbGplNFJFYm9NcWFjQVJzQVl0RFJBWGhmZ1FyMWtr?oc=5",
-   "when": "2026-11-06T23:38:21+09:00",
-   "source": "Manufacturing Chemist",
-   "sources": [
-    "Manufacturing Chemist",
-    "Pharmaceutical Executive"
-   ],
-   "snippet": "Johnson & Johnson secures FDA approval for RYBREVANT FASPRO in head and neck cancer    Manufacturing Chemist",
-   "cat": "reg",
-   "breast": false,
-   "score": 7.1,
-   "lang": "en",
-   "members": [
-    {
-     "title": "Johnson & Johnson secures FDA approval for RYBREVANT FASPRO in head and neck cancer - Manufacturing Chemist",
-     "link": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxOUVF4am03YUNGd0hjU1p3MHRoZUt0QWE1cWpxSHo0Yzl6ajF0N2JNQjVkaE1QSGMtb2VkOFZraXRpTmpqYkRsMl9iOVpVVUtldll2ZDhMamV6Q2xtM1NDRGh6NmFYeDdlWTd5Sm9EbGplNFJFYm9NcWFjQVJzQVl0RFJBWGhmZ1FyMWtr?oc=5",
-     "source": "Manufacturing Chemist"
-    },
-    {
-     "title": "FDA Grants Accelerated Approval to Rybrevant Faspro in Head and Neck Cancer - Pharmaceutical Executive",
-     "link": "https://news.google.com/rss/articles/CBMikwFBVV95cUxQcVRTVDZFTEFRX0JOTHNHVXNHZlp3NEV2SUtlM0NMVE5LUWExQ29BSjZUY1VhNWh5UnlrNGNoM3JBMWpWajhzRnU5OUp3OWJGZTljcFpYZlVRWGR1aHJSaXh4YTZwSnF2cU9VVkRubG9maGc0aHRVcmMxZnVpQXphWXV5R3duUWx3WHpMSU9UQTN1WkU?oc=5",
-     "source": "Pharmaceutical Executive"
-    }
-   ],
-   "title_ko": "J&J, 두경부암 치료제 RYBREVANT FASPRO 미국 FDA 승인 확보",
-   "summary": "J&J가 두경부암 치료제 RYBREVANT FASPRO의 FDA 승인을 확보했다는 보도입니다."
-  },
-  {
-   "id": 150,
-   "title": "J&J Announces US FDA Approval Of Rybrevant Faspro As First And Only Dual-Targeted Therapy For Advanced Head And Neck Cancer - TradingView",
-   "link": "https://news.google.com/rss/articles/CBMingJBVV95cUxQMXJNT3NlMmtPQURWTW9qRmJTMVEzbTVid2xYMWFGN3h4WWZvOEpIcTV6a0p1MzlBY0NobEdMM0c3VTgydzFPLVZLb2JrNHR3cTVKSTVYa1FaTXVqdEl0MlR0cHl2ZUI1Rm1MbkV0SWIyZzJmYXRYU0tDTklRSFlCbGlGcElrWHRSVDVpeVNvYmsySmd5ZW1VMDl6bktqZ3k0WEVwT1c3cFg4S2VsYjJMTkZJLVVTdmxYd3FrSVM0ejQ2VHVCRm5hdUFHd0NCeDJvbXY4OEdrMVIyeUdCRWhfbExfQUxLM1IzSjNsVG9Udk9yb3RYVVFmeFVTbm5wa3hTUHRwc2pUTnlXdlBlSElGZFRVSVhoN2FMNnRHbHZR?oc=5",
-   "when": "2026-11-06T11:06:00+09:00",
-   "source": "TradingView",
-   "sources": [
-    "TradingView",
-    "WBOC TV"
-   ],
-   "snippet": "J&J Announces US FDA Approval Of Rybrevant Faspro As First And Only Dual-Targeted Therapy For Advanced Head And Neck Cancer    TradingView",
-   "cat": "reg",
-   "breast": false,
-   "score": 6.93,
-   "lang": "en",
-   "members": [
-    {
-     "title": "J&J Announces US FDA Approval Of Rybrevant Faspro As First And Only Dual-Targeted Therapy For Advanced Head And Neck Cancer - TradingView",
-     "link": "https://news.google.com/rss/articles/CBMingJBVV95cUxQMXJNT3NlMmtPQURWTW9qRmJTMVEzbTVid2xYMWFGN3h4WWZvOEpIcTV6a0p1MzlBY0NobEdMM0c3VTgydzFPLVZLb2JrNHR3cTVKSTVYa1FaTXVqdEl0MlR0cHl2ZUI1Rm1MbkV0SWIyZzJmYXRYU0tDTklRSFlCbGlGcElrWHRSVDVpeVNvYmsySmd5ZW1VMDl6bktqZ3k0WEVwT1c3cFg4S2VsYjJMTkZJLVVTdmxYd3FrSVM0ejQ2VHVCRm5hdUFHd0NCeDJvbXY4OEdrMVIyeUdCRWhfbExfQUxLM1IzSjNsVG9Udk9yb3RYVVFmeFVTbm5wa3hTUHRwc2pUTnlXdlBlSElGZFRVSVhoN2FMNnRHbHZR?oc=5",
-     "source": "TradingView"
-    },
-    {
-     "title": "Johnson & Johnson announces U.S. FDA Approval of RYBREVANT FASPRO™ (amivantamab and hyaluronidase-lpuj) as First and Only Dual-Targeted Therapy for Advanced Head and Neck Cancer - WBOC TV",
-     "link": "https://news.google.com/rss/articles/CBMiqgJBVV95cUxOTnJnRl8zRzR3TkJVa1VIY0d5MXRLOWhsU3VUeVdwX1VydXR6NlB1c2didWdoSjIyZWJEVEpOckJuTHFSd0NKRnkxZDJUb19iVkZpN1BocVZMck5MQ285a3QwbGROUDU1X3dqcmN1clZVal9Sc3VZa2xCdlh3b0VoMWhTQ1VybFdFYzZJQ21Oa0RNRC01MjAwWWV4T3huWnNBQUNONl9tUDJVNjE3M2YyNHRxTDZQcmFmYzAxT2JrNmlJWGd6aEtBNEdZYmNmYXpEbVUzS0NzTGk1WkdfaDV2aTBZaFFPWG5xWm1mRTltTF9IaU1kTXRvUjVoUFFDdlUzamZxa29SVWVuV3dvY0hTUmhYV29Ma2FMVlVBZHJ5Ujl3NjVadncwdjhn?oc=5",
-     "source": "WBOC TV"
-    }
-   ],
-   "title_ko": "J&J, 진행성 두경부암 첫 이중표적 치료제 Rybrevant Faspro FDA 승인 발표",
-   "summary": "J&J가 진행성 두경부암에 대한 최초이자 유일한 이중표적 치료제로 Rybrevant Faspro의 FDA 승인을 발표했다는 내용입니다."
-  },
-  {
-   "id": 154,
-   "title": "FDA Approves SC Amivantamab for Recurrent/Metastatic HNSCC - CancerNetwork",
-   "link": "https://news.google.com/rss/articles/CBMimAFBVV95cUxPTGMtTXJpanM1SlpfR05jb0VKMTVMc0pBU1hoeVo5WnR6WTdhaDhTbWlEZGR1SVhnNEN0bUs3TlkyeDVXdjF2by04RXlaTlFsb2RaaGFqLVFxVmlJbl9Qc0xPMVdLZnBSMVg5R1JCU2Z6UUQwaDMwRndReWhNN193endpUzNTT2xEODJhd0JOMWM4OThjM2VBTQ?oc=5",
-   "when": "2026-11-06T09:04:08+09:00",
-   "source": "CancerNetwork",
-   "sources": [
-    "CancerNetwork",
-    "Targeted Oncology"
-   ],
-   "snippet": "FDA Approves SC Amivantamab for Recurrent/Metastatic HNSCC    CancerNetwork",
-   "cat": "reg",
-   "breast": false,
-   "score": 6.9,
-   "lang": "en",
-   "members": [
-    {
-     "title": "FDA Approves SC Amivantamab for Recurrent/Metastatic HNSCC - CancerNetwork",
-     "link": "https://news.google.com/rss/articles/CBMimAFBVV95cUxPTGMtTXJpanM1SlpfR05jb0VKMTVMc0pBU1hoeVo5WnR6WTdhaDhTbWlEZGR1SVhnNEN0bUs3TlkyeDVXdjF2by04RXlaTlFsb2RaaGFqLVFxVmlJbl9Qc0xPMVdLZnBSMVg5R1JCU2Z6UUQwaDMwRndReWhNN193endpUzNTT2xEODJhd0JOMWM4OThjM2VBTQ?oc=5",
-     "source": "CancerNetwork"
-    },
-    {
-     "title": "FDA Approves Amivantamab and Hyaluronidase for Recurrent/Metastatic HNSCC - Targeted Oncology",
-     "link": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxQNTJLaWFKeXVHTDVpQWUzN0dwQkZ0cU1BeXRnZ1FCLTNyV0NrT3ZZZXdBQTQ5RHpXMm9yRVgxNUxnSVJZV0FhSXhqSFIzd0FYUTVDdXJKSllfS2xmQmVxdjdzX0R4Mi1QeU5tZXJWbW82UFFVLU00Nlc1emNFSDg5aWlDeXoxNjdZNWM2cjV1bUczUmFxNTR6UG5ZQU85NkRCUjlxMGJNakswdw?oc=5",
-     "source": "Targeted Oncology"
-    }
-   ],
-   "title_ko": "FDA, 재발·전이성 두경부편평세포암에 피하주사 amivantamab 승인",
-   "summary": "FDA가 재발성·전이성 HNSCC 환자를 위한 피하주사형 amivantamab을 승인했다는 보도입니다."
-  },
-  {
-   "id": 0,
+   "id": 2,
    "title": "케이메디허브, 간세포암 표적항암제 'ETN101' 미국 임상 진입 지원 - 의학신문",
    "link": "https://news.google.com/rss/articles/CBMiakFVX3lxTE5yb0lBT2Vpc01najdLRkhxTlIxQ25VQnhIX19oemRsRDV1bGNmODVOVmJpbkxfMkJLaGVpVzFfRGpXZnZKM2JsZ2MycThwRTNDa0RwX09qbllGb1VPdlFYSkNaRjdNUGZwWnc?oc=5",
    "when": "2026-11-09T14:47:48+09:00",
@@ -294,7 +175,7 @@
    "snippet": "케이메디허브, 간세포암 표적항암제 'ETN101' 미국 임상 진입 지원    의학신문",
    "cat": "targeted",
    "breast": false,
-   "score": 5.98,
+   "score": 5.97,
    "lang": "ko",
    "members": [
     {
@@ -314,42 +195,96 @@
     }
    ],
    "title_ko": "케이메디허브, 간세포암 표적항암제 'ETN101' 미국 임상 진입 지원",
-   "summary": "케이메디허브가 간세포암 표적항암제 ETN101의 미국 임상 진입을 지원한다는 내용입니다."
+   "summary": "케이메디허브가 간세포암 표적항암제 ETN101의 미국 임상 진입을 지원합니다."
   },
   {
-   "id": 6,
-   "title": "앱클론·종근당, CAR-T 치료제 '네스페셀' 국내 독점 판매 계약 - 서울경제TV",
-   "link": "https://news.google.com/rss/articles/CBMiZEFVX3lxTE0xYmtOUnA0MmxlTU9ZLTFqNE4wU2pPaFE0QVR1VXE4RWlPNHhkUVBNd2Zsbl83YTFwLTNmUXAzQlFqUFZfZTRHSEhLZnhZNlpkMzJlS214S0VkQVJFTkZQc1hzQjE?oc=5",
-   "when": "2026-11-09T14:13:58+09:00",
-   "source": "서울경제TV",
+   "id": 22,
+   "title": "제일약품, 바이오유럽서 당뇨·항암 신약 기술수출 추진 - 바이오타임즈",
+   "link": "https://news.google.com/rss/articles/CBMibEFVX3lxTFBkRElETjVQbFcwY3NhNjNLbkVXWUxIYTUxX2dWZE0tZ0NPR0NBYVVTbkdITUx6bk45QnNYMWZqM3g3MEhFbElCUENiaDB6ckxFOHJudzhTdHhrLUpyNXRZeEpEZFdSOFRIWXNXQQ?oc=5",
+   "when": "2026-11-09T09:49:24+09:00",
+   "source": "바이오타임즈",
    "sources": [
-    "메디컬투데이",
-    "서울경제TV"
+    "더트래커",
+    "바이오타임즈"
    ],
-   "snippet": "앱클론·종근당, CAR-T 치료제 '네스페셀' 국내 독점 판매 계약    서울경제TV",
-   "cat": "cart",
+   "snippet": "제일약품, 바이오유럽서 당뇨·항암 신약 기술수출 추진    바이오타임즈",
+   "cat": "other",
    "breast": false,
-   "score": 5.97,
+   "score": 5.9,
    "lang": "ko",
    "members": [
     {
-     "title": "앱클론·종근당, CAR-T 치료제 '네스페셀' 국내 독점 판매 계약 - 서울경제TV",
-     "link": "https://news.google.com/rss/articles/CBMiZEFVX3lxTE0xYmtOUnA0MmxlTU9ZLTFqNE4wU2pPaFE0QVR1VXE4RWlPNHhkUVBNd2Zsbl83YTFwLTNmUXAzQlFqUFZfZTRHSEhLZnhZNlpkMzJlS214S0VkQVJFTkZQc1hzQjE?oc=5",
-     "source": "서울경제TV"
+     "title": "제일약품, 바이오유럽서 당뇨·항암 신약 기술수출 추진 - 바이오타임즈",
+     "link": "https://news.google.com/rss/articles/CBMibEFVX3lxTFBkRElETjVQbFcwY3NhNjNLbkVXWUxIYTUxX2dWZE0tZ0NPR0NBYVVTbkdITUx6bk45QnNYMWZqM3g3MEhFbElCUENiaDB6ckxFOHJudzhTdHhrLUpyNXRZeEpEZFdSOFRIWXNXQQ?oc=5",
+     "source": "바이오타임즈"
     },
     {
-     "title": "앱클론·종근당, CAR-T 치료제 '네스페셀' 국내 독점 판매 계약 - 메디컬투데이",
-     "link": "https://news.google.com/rss/articles/CBMibEFVX3lxTE82aUIzVVdULWlQNGF5ZGl2cXJGLURKSTJsQUxTNUVsZ25GQUUtakFEODU2eE8tbGlNRnZBX3NsdUtyaEM2VXNZdkd3QUtueVJFWDNmbXdPM0tqLWNvTzVEaXJxN0dwM2lqOHg5QQ?oc=5",
-     "source": "메디컬투데이"
+     "title": "제일약품, 당뇨·항암 신약 후보물질 기술수출 추진…유럽서 파트너링 - 더트래커",
+     "link": "https://news.google.com/rss/articles/CBMiWEFVX3lxTFByWTRfeFllbG1MRXZyNmVmWXdrLUx1QV9Nek1sLTR4bmI4T0tPSUdQZVpfSEVSNExEdUROZ1V3c3ViSjNQQjJWWGY5d0k5ZUtoMjZyTHNGU3A?oc=5",
+     "source": "더트래커"
     }
    ],
-   "title_ko": "앱클론·종근당, CAR-T 치료제 '네스페셀' 국내 독점 판매 계약",
-   "summary": "앱클론과 종근당이 CAR-T 치료제 '네스페셀'의 국내 독점 판매 계약을 체결했다는 소식입니다."
+   "title_ko": "제일약품, 바이오유럽서 당뇨·항암 신약 기술수출 추진",
+   "summary": "제일약품이 바이오유럽 행사에서 당뇨 및 항암 신약의 기술수출을 추진합니다."
+  },
+  {
+   "id": 45,
+   "title": "HSS Study Highlights Potential for CAR T-Cell Therapy to Transform Lupus Treatment - The Joplin Globe",
+   "link": "https://news.google.com/rss/articles/CBMikwJBVV95cUxQd3FjM1c3bzFNSmRhNHByU0c4RU81VEVXdU1RLUp1QURvYVNuRmRkWThIWEdwOVJaMUxadUtfWmxRRVZLdnJvZHN2b2wzV0dkVlNDdGlzUFhPVUI2VWJZSFZIOThYeHFZcU1zMU54Y24yNk5JUHZ0UjFCc0tXN1RzRllIUjhaT3p2X2pRbXFnbGJYWF84bEJOQV9xM3pxMDBJNGVZMXI0UVJpWWhsUHpIbTNweVZ0YTREaHlqaGpjVHNLc0g2S050OXBzRDEtQnN2YW00YmJMNk9MbUpxeGRkaEVsT0tWNWhvMmFJUWhKQUdIcFA1bEM4dmFQM21Dejd4eXY0UzQ1N2h4b1F0QlpRa0lvdw?oc=5",
+   "when": "2026-11-09T00:32:31+09:00",
+   "source": "The Joplin Globe",
+   "sources": [
+    "The Daily Tribune News",
+    "The Joplin Globe"
+   ],
+   "snippet": "HSS Study Highlights Potential for CAR T-Cell Therapy to Transform Lupus Treatment    The Joplin Globe",
+   "cat": "cart",
+   "breast": false,
+   "score": 5.77,
+   "lang": "en",
+   "members": [
+    {
+     "title": "HSS Study Highlights Potential for CAR T-Cell Therapy to Transform Lupus Treatment - The Joplin Globe",
+     "link": "https://news.google.com/rss/articles/CBMikwJBVV95cUxQd3FjM1c3bzFNSmRhNHByU0c4RU81VEVXdU1RLUp1QURvYVNuRmRkWThIWEdwOVJaMUxadUtfWmxRRVZLdnJvZHN2b2wzV0dkVlNDdGlzUFhPVUI2VWJZSFZIOThYeHFZcU1zMU54Y24yNk5JUHZ0UjFCc0tXN1RzRllIUjhaT3p2X2pRbXFnbGJYWF84bEJOQV9xM3pxMDBJNGVZMXI0UVJpWWhsUHpIbTNweVZ0YTREaHlqaGpjVHNLc0g2S050OXBzRDEtQnN2YW00YmJMNk9MbUpxeGRkaEVsT0tWNWhvMmFJUWhKQUdIcFA1bEM4dmFQM21Dejd4eXY0UzQ1N2h4b1F0QlpRa0lvdw?oc=5",
+     "source": "The Joplin Globe"
+    },
+    {
+     "title": "HSS Study Highlights Potential for CAR T-Cell Therapy to Transform Lupus Treatment - The Daily Tribune News",
+     "link": "https://news.google.com/rss/articles/CBMingJBVV95cUxNMXlxWURSZ2FHZ3BWWlpsNjctTkkzaURyeUxOdVd5TDNZVWh3bmxiNi15d2c0am9uTzJVS1l5eHlMX0JjbFhFSHFzTmE1ZlRTRk9ZM1hBRk5lMmtvLWl4REtYTkxZanVybGVUSVRGYk9YbEVTTkczRlNKVUFNeGVxU04wM1dhX092NFlnWHlTaGJBdWNadmdvaE14VFFnWmRjUnNXMVNDYng2bGhsLTBUcGVQRVc5dlR0UE1weTRIY2RHN1pMb21sTURSdmtXVk02ZWJRT1d2T3BQRFNSM3Q0LXRublRiNzh3RWJoWkVhbXFhQnN1SVlEcUNtVGVWWi1ULXh4YVBOSmVJMnBITnpybVFTN3JONzdTTmhNS293?oc=5",
+     "source": "The Daily Tribune News"
+    }
+   ],
+   "title_ko": "HSS 연구, CAR-T 세포치료의 루푸스 치료 변화 가능성 제시",
+   "summary": "HSS 연구에서 CAR-T 세포치료가 루푸스 치료를 바꿀 잠재력이 있다는 결과가 제시되었습니다."
+  },
+  {
+   "id": 54,
+   "title": "FDA approves breakthrough drug to treat advanced pancreatic cancer - ABC News - Breaking News, Latest News and Videos",
+   "link": "https://news.google.com/rss/articles/CBMirgFBVV95cUxQXzVOaEFzN0VYZFQ1VGFmaFZsVUNRTmg5TGhOTk1MVDBSVENmejFfQmJta29jaDJ4Qk5NWTkxc2QzRUhpRDJleU9BZTkxYUV4YzZDRnNIY2tkeHJMcTF5S0ZKV3lGVFAwTXlGYkE4QXRna1VOQ2RmVXE4eTl6TjdRS09XUFlqaFBOQmN2aDN0d3E1Y1pvZDlfcmJSVlF0dVZwbFpUamhBLWIyUTVJVFHSAbMBQVVfeXFMUFFHQm1SOGhLWmFEZ29HVmNYSnEzcnAwZjdvMXhwT2pWbkhTMzY4ZkUxT1IwYlFVZy1oSXl6a0E0V3I1czJKdko2SHJaWUZSNU5OaDU5b1BfNkVRNjJ4aHFzN3NRYnNPZndPQmhoVXpOZEhmY0JvbmVKSWNaRnkxdlVNWHdoazhGY2lMSnpXZnZ4YTJ0Z19RNDdSQ0VsM3hoUm1YWjJuN0ZMdlphSkZNWWNGUmM?oc=5",
+   "when": "2026-11-08T12:19:03+09:00",
+   "source": "ABC News - Breaking News, Latest News and Videos",
+   "sources": [
+    "ABC News - Breaking News, Latest News and Videos"
+   ],
+   "snippet": "FDA approves breakthrough drug to treat advanced pancreatic cancer    ABC News - Breaking News, Latest News and Videos",
+   "cat": "reg",
+   "breast": false,
+   "score": 5.6,
+   "lang": "en",
+   "members": [
+    {
+     "title": "FDA approves breakthrough drug to treat advanced pancreatic cancer - ABC News - Breaking News, Latest News and Videos",
+     "link": "https://news.google.com/rss/articles/CBMirgFBVV95cUxQXzVOaEFzN0VYZFQ1VGFmaFZsVUNRTmg5TGhOTk1MVDBSVENmejFfQmJta29jaDJ4Qk5NWTkxc2QzRUhpRDJleU9BZTkxYUV4YzZDRnNIY2tkeHJMcTF5S0ZKV3lGVFAwTXlGYkE4QXRna1VOQ2RmVXE4eTl6TjdRS09XUFlqaFBOQmN2aDN0d3E1Y1pvZDlfcmJSVlF0dVZwbFpUamhBLWIyUTVJVFHSAbMBQVVfeXFMUFFHQm1SOGhLWmFEZ29HVmNYSnEzcnAwZjdvMXhwT2pWbkhTMzY4ZkUxT1IwYlFVZy1oSXl6a0E0V3I1czJKdko2SHJaWUZSNU5OaDU5b1BfNkVRNjJ4aHFzN3NRYnNPZndPQmhoVXpOZEhmY0JvbmVKSWNaRnkxdlVNWHdoazhGY2lMSnpXZnZ4YTJ0Z19RNDdSQ0VsM3hoUm1YWjJuN0ZMdlphSkZNWWNGUmM?oc=5",
+     "source": "ABC News - Breaking News, Latest News and Videos"
+    }
+   ],
+   "title_ko": "FDA, 진행성 췌장암 획기적 신약 승인",
+   "summary": "FDA가 진행성 췌장암 치료를 위한 획기적인 신약을 승인했다고 보도되었습니다."
   }
  ],
  "breast": [
   {
-   "id": 143,
+   "id": 141,
    "title": "포항세명기독병원 백남선 암병원장, 국제학술대회·글로벌 웨비나서 유방암 치료 경험 공유 - NSP통신",
    "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE1fWG9OaWhMb0pLNXFtMWNuT0UzM2lRQ1Y4RVFqcEc2QzkwS0VXZkxDWmZNdldicjl1S1FfX1NTUm9PNG5uRTEtdUwwTjE5N3EzM2RUXzJpUGxJNUg4dHZUOQ?oc=5",
    "when": "2026-11-06T14:46:35+09:00",
@@ -361,7 +296,7 @@
    "snippet": "포항세명기독병원 백남선 암병원장, 국제학술대회·글로벌 웨비나서 유방암 치료 경험 공유    NSP통신",
    "cat": "other",
    "breast": true,
-   "score": 4.98,
+   "score": 4.97,
    "lang": "ko",
    "members": [
     {
@@ -375,11 +310,11 @@
      "source": "아이뉴스24"
     }
    ],
-   "title_ko": "포항세명기독병원 백남선 암병원장, 국제학술대회·글로벌 웨비나서 유방암 치료 경험 공유",
-   "summary": "백남선 암병원장이 국제학술대회와 글로벌 웨비나에서 유방암 치료 경험을 공유했다는 내용입니다."
+   "title_ko": "포항세명기독병원 백남선 암병원장, 국제학술대회서 유방암 치료 경험 공유",
+   "summary": "백남선 암병원장이 국제학술대회와 글로벌 웨비나에서 유방암 치료 경험을 공유했습니다."
   },
   {
-   "id": 253,
+   "id": 250,
    "title": "Tucatinib With Trastuzumab and Pertuzumab Approved for HER2-Positive Breast Cancer Maintenance - Clinical Oncology News",
    "link": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxNM1FNb21ybWMtaVZEVXVSY1VhQTBkX050ZlNhd1JJbzNYU3FrMEdwVnVkWDFnb25DLTNOZlBQT1JudkJmVnVEdHVxa1RiblR6UFBTUEI3aElqX05NZWdfZEE2WGpuVTVLc1czUEQyX2FnT0IzS3p5MDJnNEdZanRTRmctMEt4RHhrUktlMWxySkE4dVZUZXhKZENJbWhMQjBxZ0xndFg4UXgweTBjdUJfSnVrOF9uV0tkdzFGMUxxQkVSa1E?oc=5",
    "when": "2026-11-04T19:07:30+09:00",
@@ -390,7 +325,7 @@
    "snippet": "Tucatinib With Trastuzumab and Pertuzumab Approved for HER2-Positive Breast Cancer Maintenance    Clinical Oncology News",
    "cat": "reg",
    "breast": true,
-   "score": 4.38,
+   "score": 4.37,
    "lang": "en",
    "members": [
     {
@@ -399,11 +334,11 @@
      "source": "Clinical Oncology News"
     }
    ],
-   "title_ko": "HER2 양성 유방암 유지요법으로 투카티닙 병용요법 승인 (Clinical Oncology News)",
-   "summary": "투카티닙을 트라스투주맙·퍼투주맙과 병용하는 요법이 HER2 양성 유방암 유지요법으로 승인되었다는 보도입니다."
+   "title_ko": "투카티닙·트라스투주맙·퍼투주맙 병용, HER2 양성 유방암 유지요법 승인",
+   "summary": "투카티닙을 트라스투주맙 및 퍼투주맙과 병용하는 요법이 HER2 양성 유방암 유지요법으로 승인되었습니다."
   },
   {
-   "id": 307,
+   "id": 304,
    "title": "Camizestrant Approval Paves the Way for ctDNA-Guided Switching in Emergent ESR1-Mutated HR+/HER2– Advanced Breast Cancer - OncLive",
    "link": "https://news.google.com/rss/articles/CBMi4AFBVV95cUxQOUZUNm15amNkUEJJNmp2cVVOWVZ6WGxtcUJtWUs2dnEtVUR1TUVOcE45UG95UV9HcllrM2FvaWQ5NmZzQjhTZG8zbVFkVDVuR2RuamZkTnp1MEJqYzhpckowYk5idE5SbWc0V0RZTzlqTnRUdTQyOVNMZEJfai0wc2c4cTd6SS1qLXVlTTVZV0ZER0tvazZOSkxMOXpWb3NKLThKaWN6R2c1ajEzTG55LTFsVlB0cFJNSU1NZndnTnVNY1RNWUk0Xy1MSXVnX0VHeEtyY2NudEliYW9xWHlFRw?oc=5",
    "when": "2026-11-03T08:42:47+09:00",
@@ -428,9 +363,9 @@
      "source": "OncLive"
     }
    ],
-   "title_ko": "카미제스트란트 승인, ctDNA 기반 치료 전환 길 열어 (OncLive)",
-   "summary": "카미제스트란트 승인으로 ESR1 변이가 새로 나타난 HR+/HER2- 진행성 유방암에서 ctDNA 기반 치료 전환의 길이 열렸다는 내용입니다."
+   "title_ko": "카미제스트란트 승인, ESR1 변이 진행성 유방암에서 ctDNA 기반 전환 치료 길 열어",
+   "summary": "카미제스트란트 승인으로 ESR1 변이가 생긴 HR+/HER2- 진행성 유방암에서 ctDNA 기반 치료 전환의 길이 열렸습니다."
   }
  ],
- "total_clusters": 357
+ "total_clusters": 354
 }
