@@ -68,6 +68,11 @@ CAT_RE = [(k, re.compile(rx, re.I)) for k, _, _, rx in CATS]
 ONC_RE = re.compile(
     r"cancer|oncolog|tumou?r|carcinoma|lymphoma|leukemia|myeloma|melanoma|CAR[- ]?T|"
     r"암\b|항암|종양|림프종|백혈병|골수종|흑색종|유방암|폐암|대장암|위암|간암|췌장암|전립선암|난소암", re.I)
+# CAR-T 는 자가면역(루푸스·중증근무력증 등)에도 쓰이므로, 암 용어 없이 자가면역 용어만 있으면 제외
+STRICT_ONC_RE = re.compile(
+    r"cancer|oncolog|tumou?r|carcinoma|lymphoma|leukemia|myeloma|melanoma|"
+    r"암\b|항암|종양|림프종|백혈병|골수종|흑색종|유방암|폐암|대장암|위암|간암|췌장암|전립선암|난소암", re.I)
+AUTOIMM_RE = re.compile(r"lupus|autoimmun|multiple sclerosis|myasthenia|rheumat|루푸스|자가면역|다발성 ?경화|중증근무력|류마티스", re.I)
 BREAST_RE = re.compile(r"breast|HER2|trastuzumab|CDK4|유방", re.I)
 TAG_BOOST = [(re.compile(r"FDA|approv|승인|허가", re.I), 2),
              (re.compile(r"Phase 3|3상|topline", re.I), 2),
@@ -164,8 +169,11 @@ def collect(now):
             log(f"[rss] {name}: 실패 {e}")
     arts += collect_naver(["항암제", "면역항암제", "CAR-T", "표적항암제", "유방암 신약"])
     cutoff = now - dt.timedelta(days=DAYS)
-    keep = [a for a in arts if a["when"] and a["when"] >= cutoff
-            and ONC_RE.search(a["title"] + " " + a["snippet"])]
+    def is_onc(a):
+        t = a["title"] + " " + a["snippet"]
+        if not ONC_RE.search(t): return False
+        return not (AUTOIMM_RE.search(t) and not STRICT_ONC_RE.search(t))
+    keep = [a for a in arts if a["when"] and a["when"] >= cutoff and is_onc(a)]
     log(f"수집 {len(arts)}건 → 기간·항암 필터 후 {len(keep)}건")
     return keep
 
@@ -232,10 +240,11 @@ def ai_summarize(top, breast):
         "제목·스니펫에 없는 수치, 효능, 승인 여부를 추측하지 마세요.\n"
         "- 같은 사건(같은 약·같은 승인·같은 발표)을 다룬 항목은 가장 정보가 많은 하나만 남기고 나머지에는 same_as 에 그 id를 적으세요. "
         "영문/국문 기사, 매체가 달라도 같은 사건이면 중복입니다.\n"
+        "- 암·항암과 무관한 기사(자가면역질환, 당뇨·비만 등 비종양 주제가 중심)는 exclude 를 true 로 하세요.\n"
         "- title_ko 에는 매체명을 붙이지 마세요. 영문 기사는 한국어로 번역하세요.\n"
         "- summary 에서 '수치가 없다/제공되지 않았다' 같은 부재 언급은 하지 말고, 알 수 있는 사실만 쓰세요.\n"
         "JSON만 출력: {\"headline\": \"이번 주 흐름 1~2문장(한국어)\", "
-        "\"items\": [{\"id\": 번호, \"same_as\": 중복이면 대표 id 아니면 null, \"title_ko\": \"한국어 제목\", \"summary\": \"1~2문장 한국어 요약\"}]}\n\n"
+        "\"items\": [{\"id\": 번호, \"same_as\": 중복이면 대표 id 아니면 null, \"exclude\": false, \"title_ko\": \"한국어 제목\", \"summary\": \"1~2문장 한국어 요약\"}]}\n\n"
         + json.dumps(items, ensure_ascii=False))
     base = {"model": model, "max_tokens": 8000, "messages": [{"role": "user", "content": prompt}]}
     hd = {"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"}
@@ -271,6 +280,8 @@ def apply_ai(clusters, ai):
             c["title_ko"], c["summary"] = x.get("title_ko"), x.get("summary")
             if x.get("same_as") not in (None, "", c["id"]):
                 c["dup_of"] = x["same_as"]
+            if x.get("exclude") is True:
+                c["dup_of"] = -1          # 비항암으로 판단 → 목록에서 제외
     return ai.get("headline", "")
 
 # ---------------------------------------------------------------- HTML 조각 (메일 호환: table+인라인 스타일)
@@ -383,7 +394,7 @@ def main():
             sys.exit(1)
         clusters = cluster(arts, now)
         trend, prev = trend_counts(clusters), load_prev(week_label)
-        cand = clusters[:MAX_ITEMS * 2]          # 중복 제거 후에도 10건이 남도록 넉넉히 요약
+        cand = clusters[:MAX_ITEMS * 3]          # 중복·비항암 제거 후에도 10건이 남도록 넉넉히 요약
         breast_all = [c for c in clusters if c["breast"] and c not in cand][:3]
         ai = None if args.no_ai else ai_summarize(cand, breast_all)
         headline = apply_ai(clusters, ai)
@@ -397,10 +408,10 @@ def main():
         top = clusters[:MAX_ITEMS]
         breast = [c for c in clusters if c["breast"]][:3]
     else:
-        pool = [c for c in clusters[:MAX_ITEMS * 2] if not c.get("dup_of")]   # AI가 지목한 중복 제외
+        pool = [c for c in clusters[:MAX_ITEMS * 3] if c.get("dup_of") is None]   # AI가 지목한 중복 제외
         top = pool[:MAX_ITEMS]
         # 유방암 워치: 상위에 이미 오른 건 제외하고 별도 3건 (중복 지목분도 제외)
-        breast = [c for c in clusters if c["breast"] and c not in top and not c.get("dup_of")][:3]
+        breast = [c for c in clusters if c["breast"] and c not in top and c.get("dup_of") is None][:3]
     section = render_section(week_label, start, end, headline, top, breast, trend, prev, args.demo, ai_used)
     save(week_label, start, end, headline, clusters, top, breast, trend, section, args.demo)
     log(f"완료: {OUT_DIR}/latest_section.html ({week_label}{' DEMO' if args.demo else ''})")
