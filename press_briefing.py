@@ -131,7 +131,7 @@ def make_session():
     return s
 
 
-def http_get(session, url, retries=2, timeout=25):
+def http_get(session, url, retries=4, timeout=(20, 40)):
     """(응답, 오류문구). 일시 오류는 2회까지 재시도. 차단·인증서 오류는 그대로 보고(우회하지 않음)."""
     last = ""
     for i in range(retries + 1):
@@ -146,7 +146,7 @@ def http_get(session, url, retries=2, timeout=25):
             return None, f"SSL 인증서 오류: {str(ex)[:120]}"
         except requests.exceptions.RequestException as ex:
             last = f"{type(ex).__name__}: {str(ex)[:120]}"
-            time.sleep(2)
+            time.sleep(3 + 3 * i)
     return None, last
 
 
