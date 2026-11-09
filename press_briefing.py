@@ -455,26 +455,41 @@ def fetch_kcredit(inst, debug_dir=None):
                "X-Requested-With": "XMLHttpRequest", "Referer": r.url or inst["url"]}
     if m:
         headers[mh.group(1) if mh else "X-CSRF-TOKEN"] = m.group(1)
-    payload = dict(hpBoardSn=sn, listCnt=cnt, sortType="DESC", currentPageTxt="1", startDate="",
-                   searchFiledCbo="all", searchTextEdt="", searchCategoryDivCbo="")
-    try:
-        rr = session.post(KCREDIT_BASE + "/board/selectBoardList.do", json=payload, headers=headers, timeout=30)
-    except requests.exceptions.RequestException as ex:
-        st["error"] = f"목록 요청 실패 ({type(ex).__name__}: {str(ex)[:100]})"
-        return st, items, session
-    st["kb"] = round(len(rr.content) / 1024)
-    if debug_dir:
-        os.makedirs(debug_dir, exist_ok=True)
-        with open(os.path.join(debug_dir, f"{inst['name']}.json"), "w", encoding="utf-8") as f:
-            f.write(rr.text)
-    if rr.status_code != 200:
-        st["error"] = f"목록 요청 HTTP {rr.status_code} (CSRF 또는 요청 형식 확인 필요)"
-        return st, items, session
-    try:
-        data = rr.json()
-        lst = data.get("boardList") or []
-    except Exception:
-        st["error"] = "목록 응답이 JSON이 아님 (요청 형식 확인 필요)"
+    srt = (re.search(r'data-sort_type="(\w*)"', page) or [None, "D"])[1] or "D"
+    bdid = (re.search(r'data-board_id="(\w*)"', page) or [None, "PRESS"])[1] or "PRESS"
+    base = dict(hpBoardSn=sn, listCnt=cnt, sortType=srt, currentPageTxt="1", startDate="",
+                searchFiledCbo="all", searchTextEdt="", searchCategoryDivCbo="")
+    variants = [("A", dict(base)),
+                ("B", dict(base, boardId=bdid, hpBoardIdSn="")),
+                ("C", dict(base, sortType="DESC", boardId=bdid)),
+                ("D", dict(hpBoardSn=sn, listCnt=cnt, sortType=srt, currentPageTxt="1")),
+                ("E", dict(base, boardId=bdid, hpBoardIdSn="", categoryYn="N", extLink="", searchData=""))]
+    lst, tried, rr = [], [], None
+    for vi, (vn, payload) in enumerate(variants):
+        try:
+            rr = session.post(KCREDIT_BASE + "/board/selectBoardList.do", json=payload, headers=headers, timeout=30)
+        except requests.exceptions.RequestException as ex:
+            st["error"] = f"목록 요청 실패 ({type(ex).__name__}: {str(ex)[:100]})"
+            return st, items, session
+        st["kb"] = round(len(rr.content) / 1024)
+        if debug_dir:
+            os.makedirs(debug_dir, exist_ok=True)
+            with open(os.path.join(debug_dir, f"{inst['name']}{'' if vi == 0 else '_' + vn}.json"), "w", encoding="utf-8") as f:
+                f.write(rr.text)
+        if rr.status_code != 200:
+            tried.append(f"{vn}:HTTP{rr.status_code}")
+            continue
+        try:
+            lst = rr.json().get("boardList") or []
+        except Exception:
+            tried.append(f"{vn}:JSON아님")
+            continue
+        tried.append(f"{vn}:{len(lst)}건")
+        if lst:
+            st["note"] = f"요청형식 {vn}"
+            break
+    if not lst:
+        st["error"] = "목록 응답에 게시글이 없음 (시도: " + ", ".join(tried) + ")"
         return st, items, session
     for b in lst:
         d, t = parse_date(str(b.get("regDt") or ""))
@@ -490,7 +505,7 @@ def fetch_kcredit(inst, debug_dir=None):
         def _detail(bid=bid, sn=sn, session=session, headers=headers):
             try:
                 x = session.post(KCREDIT_BASE + "/board/selectBoard.do",
-                                 json=dict(hpBoardSn=sn, hpBoardIdSn=str(bid), sortType="DESC"),
+                                 json=dict(hpBoardSn=sn, hpBoardIdSn=str(bid), sortType=srt, boardId=bdid),
                                  headers=headers, timeout=25)
                 content = (x.json().get("board") or {}).get("content") or ""
                 txt = sp(LH.fromstring("<div>" + html.unescape(content) + "</div>").text_content()) if content else ""
