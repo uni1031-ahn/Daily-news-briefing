@@ -1,0 +1,46 @@
+name: press-briefing
+
+on:
+  schedule:
+    - cron: "10 23 * * *"      # 매일 한국시간 오전 8시 10분
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "실행 방식: send(메일 발송) / check(기관별 접속 점검만, 메일 없음)"
+        default: "send"
+        type: choice
+        options: [send, check]
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements_press.txt
+      - name: 점검 모드
+        if: ${{ github.event.inputs.mode == 'check' }}
+        run: python press_briefing.py --check --debug-dir debug
+      - name: 보도자료 수집·발송
+        if: ${{ github.event.inputs.mode != 'check' }}
+        run: python press_briefing.py --debug-dir debug
+        env:
+          WINDOW_HOURS: "48"
+          APPS_SCRIPT_URL: ${{ secrets.APPS_SCRIPT_URL }}
+          APPS_SCRIPT_TOKEN: ${{ secrets.APPS_SCRIPT_TOKEN }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          PRESS_MAIL_TO: ${{ secrets.PRESS_MAIL_TO }}
+      - name: 기관별 원본 목록 저장 (구조 분석용)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: press-debug
+          path: debug
+          retention-days: 3
+          if-no-files-found: ignore
+
