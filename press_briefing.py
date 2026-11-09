@@ -52,20 +52,26 @@ INSTITUTIONS = [
     dict(field="보험", name="금융위원회", url="https://www.fsc.go.kr/no010101", insurance_only=True),
     dict(field="보험", name="금융감독원", url="https://www.fss.or.kr/fss/bbs/B0000188/list.do?menuNo=200218",
          insurance_only=True),
-    dict(field="보험", name="보험개발원", url="https://www.kidi.or.kr/user/nd11592.do"),
-    dict(field="보험", name="생명보험협회", url="https://www.klia.or.kr/board/2/list.do"),
+    dict(field="보험", name="보험개발원", url="https://www.kidi.or.kr/user/nd11592.do",
+         link_re=r"goBoardView\('[^']*',\s*'View',\s*'(\w+)'",
+         link_fmt="https://www.kidi.or.kr/user/nd11592.do?View&boardNo={0}"),
+    dict(field="보험", name="생명보험협회", url="https://www.klia.or.kr/board/2/list.do",
+         link_re=r"fn_goView\('(\d+)'",
+         link_fmt="https://www.klia.or.kr/board/2/view.do?boardNo={0}&boardMngNo=2&seq=1"),
     dict(field="보험", name="손해보험협회", url="https://www.knia.or.kr/data/news"),
     dict(field="보험", name="신용정보원",
          url="https://www.kcredit.or.kr:1441/notice/pressRelease.do?menuNo=320&hpBoardSn=PRESS&link=notice%2FpressRelease.do",
          warmup="https://www.kcredit.or.kr:1441/"),
     dict(field="의료", name="보건복지부", url="https://www.mohw.go.kr/board.es?mid=a10503010100&bid=0027",
          link_fmt="https://www.mohw.go.kr/board.es?mid=a10503010100&bid=0027&act=view&list_no={id}"),
-    dict(field="의료", name="건강보험심사평가원", url="https://www.hira.or.kr/bbsDummy.do?pgmid=HIRAA020002000100"),
+    dict(field="의료", name="건강보험심사평가원", url="https://www.hira.or.kr/bbsDummy.do?pgmid=HIRAA020041000100"),
     dict(field="의료", name="국민건강보험공단", url="https://www.nhis.or.kr/nhis/together/wbhaea01600m01.do"),
     dict(field="의료", name="국민장기요양보험",
          url="https://www.longtermcare.or.kr/npbs/d/m/000/moveBoardView?menuId=npe0000002787&bKey=B0010"),
     dict(field="의료", name="질병관리청",
-         url="https://www.kdca.go.kr/kdca/2848/subview.do?enc=Zm5jdDF8QEB8JTJGYmJzJTJGa2RjYSUyRjQyJTJGYXJ0Y2xMaXN0LmRvJTNG"),
+         url="https://www.kdca.go.kr/kdca/2848/subview.do?enc=Zm5jdDF8QEB8JTJGYmJzJTJGa2RjYSUyRjQyJTJGYXJ0Y2xMaXN0LmRvJTNG",
+         link_re=r"jf_viewArtcl\('(\w+)'(?:%20|\s|,|')+(\d+)(?:%20|\s|,|')+(\d+)",
+         link_fmt="https://www.kdca.go.kr/bbs/{0}/{1}/{2}/artclView.do"),
     dict(field="의료", name="식품의약품안전처", url="https://www.mfds.go.kr/brd/m_99/list.do"),
 ]
 
@@ -152,6 +158,7 @@ FILE_EXT_RE = re.compile(r"\.(hwpx?|pdf|zip|xlsx?|docx?|pptx?)\b", re.I)
 BAD_SHORT = ("다운로드", "첨부", "미리보기", "바로보기", "더보기", "이전", "다음", "목록", "처음", "마지막",
              "닫기", "검색", "초기화", "공유", "인쇄", "스크랩", "복사", "맨앞", "맨뒤")
 NOISE_TITLE_TAIL = re.compile(r"\s*(?:N|new|NEW|새글|첨부파일\s*있음|파일첨부)\s*$")
+NOISE_TITLE_HEAD = re.compile(r"^\s*(?:새글|NEW|new)\s+")
 
 
 def parse_date(text: str):
@@ -197,10 +204,14 @@ def title_anchor(row):
     return best
 
 
-def row_link(a, page_url, link_fmt=None):
+def row_link(a, page_url, link_fmt=None, link_re=None):
     """(링크, 목록주소로 대체했는지)."""
     href = (a.get("href") or "").strip()
     onclick = a.get("onclick") or ""
+    if link_fmt and link_re:
+        m0 = re.search(link_re, href + " " + onclick)
+        if m0:
+            return link_fmt.format(*m0.groups()), False
     if href and not href.lower().startswith(("javascript:", "#")):
         return urljoin(page_url, href), False
     m = re.search(r"\(\s*['\"]?([A-Za-z0-9_\-]{3,})['\"]?", href + " " + onclick)
@@ -212,7 +223,7 @@ def row_link(a, page_url, link_fmt=None):
 DEPT_RE = re.compile(r"^[가-힣A-Za-z0-9·\s]{2,22}(?:국|과|팀|실|부|센터|본부|단|처|담당관|연구소|연구원|사업부)$")
 
 
-def extract_rows(doc, page_url, link_fmt=None):
+def extract_rows(doc, page_url, link_fmt=None, link_re=None):
     cands = []
     for el in doc.iter("tr", "li", "dl", "div", "article"):
         txt = el.text_content()
@@ -241,13 +252,13 @@ def extract_rows(doc, page_url, link_fmt=None):
         leaves = keep or leaves
     rows, seen = [], set()
     for el, (a, title) in leaves:
-        title = NOISE_TITLE_TAIL.sub("", title)
+        title = NOISE_TITLE_HEAD.sub("", NOISE_TITLE_TAIL.sub("", title))
         d, t = parse_date(el.text_content())
         key = (title, d)
         if key in seen:
             continue
         seen.add(key)
-        link, is_list = row_link(a, page_url, link_fmt)
+        link, is_list = row_link(a, page_url, link_fmt, link_re)
         cells = [sp(c.text_content()) for c in el.iter("td")] if el.tag == "tr" else \
                 [sp(c.text_content()) for c in el.iterchildren()]
         dept = next((c for c in cells if c and c != title and title not in c and DEPT_RE.match(c)), "")
@@ -309,7 +320,28 @@ def body_text(page: str) -> str:
     return txt or ""
 
 
+NOISE_PATS = [
+    r"작성일\s*\d{4}[-.]\d{1,2}[-.]\d{1,2}(?:\s+\d{1,2}:\d{2})?",
+    r"현재\s*페이지의\s*내용에\s*만족하십니까\??",
+    r"총\s*5점\s*중\s*\d점\(\d+건\)",
+    r"(?:전화|TEL|Tel|연락처)\s*[:：]?\s*[\d\-() ]{7,}",
+    r"담당부서\s*[:：]?[^\n]{0,30}",
+    r"조회수?\s*[:：]?\s*\d+",
+    r"(?:^|\s)(?:새글|NEW)(?=\s|$)",
+]
+
+
+def clean_noise(text: str, title: str) -> str:
+    t = text or ""
+    if title:
+        t = t.replace(title, " ")
+    for p in NOISE_PATS:
+        t = re.sub(p, " ", t)
+    return t
+
+
 def make_summary(text: str, title: str) -> str:
+    text = clean_noise(text, title)
     lines = []
     for ln in (text or "").splitlines():
         ln = ln.strip().lstrip(BULLETS).strip()
@@ -364,7 +396,7 @@ def fetch_institution(inst, debug_dir=None):
     except Exception as ex:
         st["error"] = f"HTML 해석 실패 ({ex})"
         return st, items, session
-    rows = extract_rows(doc, r.url or inst["url"], inst.get("link_fmt"))
+    rows = extract_rows(doc, r.url or inst["url"], inst.get("link_fmt"), inst.get("link_re"))
     st["rows"] = len(rows)
     if not rows:
         visible = sp(doc.text_content())[:200]
