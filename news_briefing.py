@@ -27,6 +27,7 @@ import concurrent.futures
 import difflib
 import hashlib
 import html
+import json
 import os
 import re
 import smtplib
@@ -55,7 +56,7 @@ PER_CATEGORY = int(os.getenv("PER_CATEGORY", "5") or "5")          # 카테고�
 SUMMARY_CHARS = int(os.getenv("SUMMARY_CHARS", "230") or "230")    # 요약문 최대 글자 수 (줄이면 메일이 촘촘해짐)
 ROW_PAD = int(os.getenv("ROW_PAD", "4") or "4")                    # 표 행의 위아래 여백(px). 작을수록 촘촘함
 RUN_INFO = {"note": "", "warn": False}     # 메일 상단에 표시할 수집 현황(2차 수집 모듈이 채움)
-BUILD = "v3.11-portal"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
+BUILD = "v3.12-onc"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
 
 SOURCES = {
     "보험": {
@@ -823,6 +824,36 @@ def build_markdown(sections):
     return "\n".join(lines)[:60000]
 
 
+def onc_section_html() -> str:
+    """'항암 주간 요약' 꼭지(oncology_weekly.py가 만든 HTML 조각)를 읽어 옵니다.
+    기본: 월요일 브리핑에만, 그리고 최근 4일 안에 만들어진 요약일 때만 붙입니다. 없거나 오래되면 빈 문자열(브리핑은 그대로).
+    ONC_SHOW=always 면 요일과 상관없이 최신본을 붙이고, ONC_SHOW=off 면 붙이지 않습니다."""
+    mode = (os.getenv("ONC_SHOW", "monday") or "monday").strip().lower()
+    if mode == "off":
+        return ""
+    now = datetime.now(KST)
+    if mode != "always" and now.weekday() != 0:
+        return ""
+    try:
+        with open("data/oncology/latest.json", encoding="utf-8") as f:
+            meta = json.load(f)
+        if meta.get("demo"):
+            return ""
+        end = datetime.strptime(meta["end"], "%Y-%m-%d").replace(tzinfo=KST)
+        if (now - end).days > 4:
+            print(f"[항암 주간 요약] 최신본({meta['end']})이 오래되어 이번에는 붙이지 않습니다")
+            return ""
+        with open("data/oncology/latest_section.html", encoding="utf-8") as f:
+            frag = f.read()
+        print(f"[항암 주간 요약] {meta.get('week')} 꼭지를 의료 영역에 붙입니다")
+        return ("<tr><td style='padding:6px 24px 0;'>" + frag + "</td></tr>")
+    except FileNotFoundError:
+        return ""
+    except Exception as ex:
+        print(f"[항암 주간 요약] 건너뜀: {ex}")
+        return ""
+
+
 def build_email_html(sections) -> str:
     """이메일용 HTML (표 레이아웃 + 인라인 CSS: Gmail/네이버/Outlook 등에서 깨지지 않도록)."""
     esc = html.escape
@@ -856,6 +887,9 @@ def build_email_html(sections) -> str:
         col = "#c0392b" if RUN_INFO["warn"] else "#888"
         out.append(f"<tr><td style='padding:2px 24px 6px;font-size:11.5px;color:{col};line-height:1.4;'>"
                    f"{esc(RUN_INFO['note'])}</td></tr>")
+    onc_html = onc_section_html()
+    med_keys = [k for k in sections if (k.split(" · ")[0] if " · " in k else k) == "의료"]
+    last_med = med_keys[-1] if med_keys else None
     cur_field = None
     for key, top in sections.items():
         fld, cat = (key.split(" · ", 1) + [""])[:2] if " · " in key else (key, "")
@@ -897,6 +931,11 @@ def build_email_html(sections) -> str:
             "<th style='width:36px;padding:4px;border:1px solid #dde2e8;font-size:13px;color:#333;'>No</th>"
             "<th style='padding:4px;border:1px solid #dde2e8;font-size:13px;color:#333;'>기사</th></tr>"
             + "".join(rows) + "</table></td></tr>")
+        if key == last_med and onc_html:      # 의료 영역의 마지막 분류 아래에 '항암 주간 요약' 꼭지
+            out.append(onc_html)
+            onc_html = ""
+    if onc_html:      # 의료 영역이 없으면 맨 아래에
+        out.append(onc_html)
     out.append(
         "<tr><td style='padding:14px 24px;font-size:12px;color:#888;line-height:1.5;border-top:1px solid #eee;'>"
         "이 메일은 자동으로 발송되었습니다. 요약문은 기사 본문 앞부분을 바탕으로 만들어져 원문과 다를 수 있으니 "
