@@ -50,6 +50,29 @@ GN_QUERIES = [
 DIRECT_FEEDS = [   # 직접 RSS (FDA 주소는 404라 제거. site:fda.gov 구글뉴스 질의가 대신함). 필요하면 (이름, 주소) 추가
 ]
 
+# ---------------------------------------------------------------- 용어 통일
+# 잘못 번역되기 쉬운 약·회사 표기를 고정합니다. { "잘못된/흔들리는 표기": "고정할 표기" } — 필요하면 줄을 추가하세요.
+GLOSSARY = {
+    "리브레반트": "리브리반트",       # Rybrevant (amivantamab)
+    "이반리스맙": "이보네시맙",       # ivonescimab
+    "이반리주맙": "이보네시맙",
+    "이보네시맙": "이보네시맙",
+}
+# AI에 알려 줄 권장 표기(프롬프트용)
+GLOSSARY_HINT = "Rybrevant=리브리반트, Keytruda=키트루다, Opdivo=옵디보, Enhertu=엔허투, ivonescimab=이보네시맙, amivantamab=아미반타맙"
+
+def unify(text):
+    if not text: return text
+    for bad, good in GLOSSARY.items():
+        text = text.replace(bad, good)
+    return text
+
+def normalize_all(clusters, headline):
+    for c in clusters:
+        for k in ("title_ko", "summary"):
+            if c.get(k): c[k] = unify(c[k])
+    return unify(headline)
+
 # ---------------------------------------------------------------- 분류
 CATS = [  # (key, 라벨, 색, 정규식) — 위에서부터 먼저 맞는 것
     ("reg",      "허가·급여", "#1f6feb", r"\bFDA\b|EMA|approv|clearance|허가|승인|급여|건보|식약처|심평원|보험"),
@@ -277,6 +300,8 @@ def ai_summarize(top, breast):
         "- vague 는 약 이름·회사·기관 등 구체적 대상이 제목·스니펫에 없어 무슨 소식인지 알기 어려우면 true.\n"
         "- title_ko 에는 매체명을 붙이지 마세요. 영문 기사는 한국어로 번역하세요.\n"
         "- summary 에서 '수치가 없다/제공되지 않았다' 같은 부재 언급은 하지 말고, 알 수 있는 사실만 쓰세요.\n"
+        "- summary 는 모두 '~했습니다/~합니다' 체로 끝내세요('~했다' 체 금지).\n"
+        f"- 약·제품 이름은 국내 보도 표기를 따르세요: {GLOSSARY_HINT}.\n"
         "JSON만 출력: {\"items\": [{\"id\": 번호, \"same_as\": 중복이면 대표 id 아니면 null, \"exclude\": false, \"cat\": \"분류키\", \"vague\": false, \"title_ko\": \"한국어 제목\", \"summary\": \"1~2문장 한국어 요약\"}]}\n\n"
         + json.dumps(items, ensure_ascii=False))
     txt = claude_text(prompt)
@@ -292,7 +317,8 @@ def ai_headline(top):
     """최종 선정된 소식만 보고 '이번 주 흐름' 1~2문장을 만든다 (목록과 문장이 어긋나지 않도록)."""
     lines = "\n".join(f"{i}. {c.get('title_ko') or c['title']} — {c.get('summary') or ''}" for i, c in enumerate(top, 1))
     txt = claude_text("아래 이번 주 항암 핵심 소식 목록만 근거로, 이번 주 흐름을 한국어 1~2문장(150자 이내)으로 요약하세요. "
-                      "목록에 없는 사건은 언급하지 말고, 설명 없이 문장만 출력하세요.\n\n" + lines, 600)
+                      "목록에 없는 사건은 언급하지 말고, '~했습니다/~입니다' 체로, 설명 없이 문장만 출력하세요. "
+                      f"약 이름 표기: {GLOSSARY_HINT}.\n\n" + lines, 600)
     return txt.strip().strip('"') if txt else ""
 
 def apply_ai(clusters, ai):
@@ -445,6 +471,8 @@ def main():
             headline = f"이번 주 항암 관련 {len(clusters)}개 이슈 중 " + ", ".join(parts) + " 순으로 많았습니다."
         # 유방암 워치: 상위에 이미 오른 건 제외하고 별도 3건 (중복 지목분도 제외)
         breast = [c for c in clusters if c["breast"] and c not in top and c.get("dup_of") is None][:3]
+    if not args.demo:
+        headline = normalize_all(clusters, headline)
     section = render_section(week_label, start, end, headline, top, breast, trend, prev, args.demo, ai_used)
     save(week_label, start, end, headline, clusters, top, breast, trend, section, args.demo)
     log(f"완료: {OUT_DIR}/latest_section.html ({week_label}{' DEMO' if args.demo else ''})")
