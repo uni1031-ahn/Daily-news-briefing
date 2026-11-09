@@ -72,6 +72,7 @@ ONC_RE = re.compile(
 STRICT_ONC_RE = re.compile(
     r"cancer|oncolog|tumou?r|carcinoma|lymphoma|leukemia|myeloma|melanoma|"
     r"암\b|항암|종양|림프종|백혈병|골수종|흑색종|유방암|폐암|대장암|위암|간암|췌장암|전립선암|난소암", re.I)
+ROUNDUP_RE = re.compile(r"\bbrief\b|biopharma brief|round-?up|week in review|weekly (news|digest|update)|news digest|브리프|모음|뉴스 ?정리|주간 ?소식|이번 ?주 ?소식", re.I)
 AUTOIMM_RE = re.compile(r"lupus|autoimmun|multiple sclerosis|myasthenia|rheumat|루푸스|자가면역|다발성 ?경화|중증근무력|류마티스", re.I)
 BREAST_RE = re.compile(r"breast|HER2|trastuzumab|CDK4|유방", re.I)
 TAG_BOOST = [(re.compile(r"FDA|approv|승인|허가", re.I), 2),
@@ -172,6 +173,7 @@ def collect(now):
     def is_onc(a):
         t = a["title"] + " " + a["snippet"]
         if not ONC_RE.search(t): return False
+        if ROUNDUP_RE.search(a["title"]): return False       # 여러 소식을 묶은 브리프·모음 기사 제외
         return not (AUTOIMM_RE.search(t) and not STRICT_ONC_RE.search(t))
     keep = [a for a in arts if a["when"] and a["when"] >= cutoff and is_onc(a)]
     log(f"수집 {len(arts)}건 → 기간·항암 필터 후 {len(keep)}건")
@@ -241,10 +243,15 @@ def ai_summarize(top, breast):
         "- 같은 사건(같은 약·같은 승인·같은 발표)을 다룬 항목은 가장 정보가 많은 하나만 남기고 나머지에는 same_as 에 그 id를 적으세요. "
         "영문/국문 기사, 매체가 달라도 같은 사건이면 중복입니다.\n"
         "- 암·항암과 무관한 기사(자가면역질환, 당뇨·비만 등 비종양 주제가 중심)는 exclude 를 true 로 하세요.\n"
+        "- 여러 소식을 한데 묶은 브리프·모음·주간 정리 기사는 exclude 를 true 로 하세요.\n"
+        "- cat 은 다음 중 가장 알맞은 하나: reg(승인·허가·급여·심사), cart(CAR-T·세포치료), adc(항체약물접합체), "
+        "rlt(방사성의약품), io(면역항암·면역관문억제제·이중항체 면역), targeted(표적항암·저분자·이중특이항체 표적치료), "
+        "trial(임상 결과·진입), biz(계약·인수·기술이전·투자), other. 승인 기사는 약물 종류와 상관없이 reg 로 합니다.\n"
+        "- vague 는 약 이름·회사·기관 등 구체적 대상이 제목·스니펫에 없어 무슨 소식인지 알기 어려우면 true.\n"
         "- title_ko 에는 매체명을 붙이지 마세요. 영문 기사는 한국어로 번역하세요.\n"
         "- summary 에서 '수치가 없다/제공되지 않았다' 같은 부재 언급은 하지 말고, 알 수 있는 사실만 쓰세요.\n"
         "JSON만 출력: {\"headline\": \"이번 주 흐름 1~2문장(한국어)\", "
-        "\"items\": [{\"id\": 번호, \"same_as\": 중복이면 대표 id 아니면 null, \"exclude\": false, \"title_ko\": \"한국어 제목\", \"summary\": \"1~2문장 한국어 요약\"}]}\n\n"
+        "\"items\": [{\"id\": 번호, \"same_as\": 중복이면 대표 id 아니면 null, \"exclude\": false, \"cat\": \"분류키\", \"vague\": false, \"title_ko\": \"한국어 제목\", \"summary\": \"1~2문장 한국어 요약\"}]}\n\n"
         + json.dumps(items, ensure_ascii=False))
     base = {"model": model, "max_tokens": 8000, "messages": [{"role": "user", "content": prompt}]}
     hd = {"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"}
@@ -280,6 +287,10 @@ def apply_ai(clusters, ai):
             c["title_ko"], c["summary"] = x.get("title_ko"), x.get("summary")
             if x.get("same_as") not in (None, "", c["id"]):
                 c["dup_of"] = x["same_as"]
+            if x.get("cat") in CAT_LABEL:
+                c["cat"] = x["cat"]
+            if x.get("vague") is True:
+                c["vague"] = True
             if x.get("exclude") is True:
                 c["dup_of"] = -1          # 비항암으로 판단 → 목록에서 제외
     return ai.get("headline", "")
@@ -409,6 +420,7 @@ def main():
         breast = [c for c in clusters if c["breast"]][:3]
     else:
         pool = [c for c in clusters[:MAX_ITEMS * 3] if c.get("dup_of") is None]   # AI가 지목한 중복 제외
+        pool.sort(key=lambda c: bool(c.get("vague")))      # 구체성이 떨어지는 기사는 뒤로 (순서는 유지)
         top = pool[:MAX_ITEMS]
         # 유방암 워치: 상위에 이미 오른 건 제외하고 별도 3건 (중복 지목분도 제외)
         breast = [c for c in clusters if c["breast"] and c not in top and c.get("dup_of") is None][:3]
