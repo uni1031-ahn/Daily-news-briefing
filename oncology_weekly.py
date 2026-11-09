@@ -232,28 +232,12 @@ def load_prev(week_label):
     return {}
 
 # ---------------------------------------------------------------- AI 요약
-def ai_summarize(top, breast):
+def claude_text(prompt, max_tokens=8000):
+    """Claude 호출 → 본문 텍스트. 키가 없거나 실패하면 None."""
     key = (os.environ.get("ANTHROPIC_API_KEY") or "").strip()
     if not key: return None
     model = os.environ.get("CLAUDE_MODEL") or os.environ.get("ANTHROPIC_MODEL") or "claude-haiku-5-5"
-    items = [dict(id=c["id"], title=c["title"], snippet=c["snippet"], sources=c["sources"][:4]) for c in top + breast]
-    prompt = (
-        "다음은 이번 주 항암 분야 기사 제목/스니펫입니다. 제공된 텍스트에 있는 사실만 사용하세요. "
-        "제목·스니펫에 없는 수치, 효능, 승인 여부를 추측하지 마세요.\n"
-        "- 같은 사건(같은 약·같은 승인·같은 발표)을 다룬 항목은 가장 정보가 많은 하나만 남기고 나머지에는 same_as 에 그 id를 적으세요. "
-        "영문/국문 기사, 매체가 달라도 같은 사건이면 중복입니다.\n"
-        "- 암·항암과 무관한 기사(자가면역질환, 당뇨·비만 등 비종양 주제가 중심)는 exclude 를 true 로 하세요.\n"
-        "- 여러 소식을 한데 묶은 브리프·모음·주간 정리 기사는 exclude 를 true 로 하세요.\n"
-        "- cat 은 다음 중 가장 알맞은 하나: reg(승인·허가·급여·심사), cart(CAR-T·세포치료), adc(항체약물접합체), "
-        "rlt(방사성의약품), io(면역항암·면역관문억제제·이중항체 면역), targeted(표적항암·저분자·이중특이항체 표적치료), "
-        "trial(임상 결과·진입), biz(계약·인수·기술이전·투자), other. 승인 기사는 약물 종류와 상관없이 reg 로 합니다.\n"
-        "- vague 는 약 이름·회사·기관 등 구체적 대상이 제목·스니펫에 없어 무슨 소식인지 알기 어려우면 true.\n"
-        "- title_ko 에는 매체명을 붙이지 마세요. 영문 기사는 한국어로 번역하세요.\n"
-        "- summary 에서 '수치가 없다/제공되지 않았다' 같은 부재 언급은 하지 말고, 알 수 있는 사실만 쓰세요.\n"
-        "JSON만 출력: {\"headline\": \"이번 주 흐름 1~2문장(한국어)\", "
-        "\"items\": [{\"id\": 번호, \"same_as\": 중복이면 대표 id 아니면 null, \"exclude\": false, \"cat\": \"분류키\", \"vague\": false, \"title_ko\": \"한국어 제목\", \"summary\": \"1~2문장 한국어 요약\"}]}\n\n"
-        + json.dumps(items, ensure_ascii=False))
-    base = {"model": model, "max_tokens": 8000, "messages": [{"role": "user", "content": prompt}]}
+    base = {"model": model, "max_tokens": max_tokens, "messages": [{"role": "user", "content": prompt}]}
     hd = {"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"}
 
     def call(extra):
@@ -267,16 +251,49 @@ def ai_summarize(top, breast):
         except urllib.error.HTTPError as e:
             if e.code != 400: raise
             j = call({})   # 이 모델이 추론 끄기 설정을 받지 않으면 설정 없이 다시
-        txt = "".join(b.get("text", "") for b in j.get("content", []) if b.get("type") == "text")
-        m = re.search(r"\{.*\}", txt, re.S)
-        if not m:
-            raise ValueError(f"JSON 없음 · 블록={[b.get('type') for b in j.get('content', [])]} · 끝난 이유={j.get('stop_reason')}")
-        return json.loads(m.group(0))
+        txt = "".join(b.get("text", "") for b in j.get("content", []) if b.get("type") == "text").strip()
+        if not txt:
+            raise ValueError(f"빈 응답 · 블록={[b.get('type') for b in j.get('content', [])]} · 끝난 이유={j.get('stop_reason')}")
+        return txt
     except urllib.error.HTTPError as e:
-        log(f"[ai] 요약 실패 → 스니펫으로 대체: HTTP {e.code} {e.read()[:200]!r}")
+        log(f"[ai] 실패: HTTP {e.code} {e.read()[:200]!r}")
     except Exception as e:
-        log(f"[ai] 요약 실패 → 스니펫으로 대체: {e}")
+        log(f"[ai] 실패: {e}")
     return None
+
+def ai_summarize(top, breast):
+    items = [dict(id=c["id"], title=c["title"], snippet=c["snippet"], sources=c["sources"][:4]) for c in top + breast]
+    prompt = (
+        "다음은 이번 주 항암 분야 기사 제목/스니펫입니다. 제공된 텍스트에 있는 사실만 사용하세요. "
+        "제목·스니펫에 없는 수치, 효능, 승인 여부를 추측하지 마세요.\n"
+        "- 같은 사건(같은 약·같은 승인·같은 발표)을 다룬 항목은 가장 정보가 많은 하나만 남기고 나머지에는 same_as 에 그 id를 적으세요. "
+        "영문/국문 기사, 매체가 달라도 같은 사건이면 중복입니다.\n"
+        "- 암·항암과 무관한 기사(자가면역질환, 당뇨·비만 등 비종양 주제가 중심)는 exclude 를 true 로 하세요.\n"
+        "- 여러 소식을 한데 묶은 브리프·모음·주간 정리 기사는 exclude 를 true 로 하세요.\n"
+        "- 기업 실적·매출·주가·자금조달이 중심인 기사(임상·허가·기술·계약 소식이 아닌 것)는 exclude 를 true 로 하세요.\n"
+        "- cat 은 다음 중 가장 알맞은 하나: reg(승인·허가·급여·심사), cart(CAR-T·세포치료), adc(항체약물접합체), "
+        "rlt(방사성의약품), io(면역항암·면역관문억제제·이중항체 면역), targeted(표적항암·저분자·이중특이항체 표적치료), "
+        "trial(임상 결과·진입), biz(계약·인수·기술이전·투자), other. 승인 기사는 약물 종류와 상관없이 reg 로 합니다.\n"
+        "- vague 는 약 이름·회사·기관 등 구체적 대상이 제목·스니펫에 없어 무슨 소식인지 알기 어려우면 true.\n"
+        "- title_ko 에는 매체명을 붙이지 마세요. 영문 기사는 한국어로 번역하세요.\n"
+        "- summary 에서 '수치가 없다/제공되지 않았다' 같은 부재 언급은 하지 말고, 알 수 있는 사실만 쓰세요.\n"
+        "JSON만 출력: {\"items\": [{\"id\": 번호, \"same_as\": 중복이면 대표 id 아니면 null, \"exclude\": false, \"cat\": \"분류키\", \"vague\": false, \"title_ko\": \"한국어 제목\", \"summary\": \"1~2문장 한국어 요약\"}]}\n\n"
+        + json.dumps(items, ensure_ascii=False))
+    txt = claude_text(prompt)
+    if not txt: return None
+    m = re.search(r"\{.*\}", txt, re.S)
+    try:
+        return json.loads(m.group(0))
+    except Exception as e:
+        log(f"[ai] 요약 JSON 해석 실패 → 스니펫으로 대체: {e}")
+        return None
+
+def ai_headline(top):
+    """최종 선정된 소식만 보고 '이번 주 흐름' 1~2문장을 만든다 (목록과 문장이 어긋나지 않도록)."""
+    lines = "\n".join(f"{i}. {c.get('title_ko') or c['title']} — {c.get('summary') or ''}" for i, c in enumerate(top, 1))
+    txt = claude_text("아래 이번 주 항암 핵심 소식 목록만 근거로, 이번 주 흐름을 한국어 1~2문장(150자 이내)으로 요약하세요. "
+                      "목록에 없는 사건은 언급하지 말고, 설명 없이 문장만 출력하세요.\n\n" + lines, 600)
+    return txt.strip().strip('"') if txt else ""
 
 def apply_ai(clusters, ai):
     if not ai: return ""
@@ -408,20 +425,24 @@ def main():
         cand = clusters[:MAX_ITEMS * 3]          # 중복·비항암 제거 후에도 10건이 남도록 넉넉히 요약
         breast_all = [c for c in clusters if c["breast"] and c not in cand][:3]
         ai = None if args.no_ai else ai_summarize(cand, breast_all)
-        headline = apply_ai(clusters, ai)
+        apply_ai(clusters, ai)
         ai_used = bool(ai)
-        if not headline:
-            n_cat = {}
-            for c in clusters: n_cat[c["cat"]] = n_cat.get(c["cat"], 0) + 1
-            parts = [f"{CAT_LABEL[k]} {v}건" for k, v in sorted(n_cat.items(), key=lambda kv: -kv[1])[:3]]
-            headline = f"이번 주 항암 관련 {len(clusters)}개 이슈 중 " + ", ".join(parts) + " 순으로 많았습니다."
+        headline = ""
     if args.demo:
         top = clusters[:MAX_ITEMS]
         breast = [c for c in clusters if c["breast"]][:3]
     else:
         pool = [c for c in clusters[:MAX_ITEMS * 3] if c.get("dup_of") is None]   # AI가 지목한 중복 제외
-        pool.sort(key=lambda c: bool(c.get("vague")))      # 구체성이 떨어지는 기사는 뒤로 (순서는 유지)
+        # 구체성이 떨어지는 기사는 뒤로(순서는 유지). 단, 여러 매체가 다룬 기사는 후순위로 밀지 않음
+        pool.sort(key=lambda c: bool(c.get("vague")) and len(c["sources"]) < 2)
         top = pool[:MAX_ITEMS]
+        if ai_used:
+            headline = ai_headline(top)
+        if not headline:
+            n_cat = {}
+            for c in clusters: n_cat[c["cat"]] = n_cat.get(c["cat"], 0) + 1
+            parts = [f"{CAT_LABEL[k]} {v}건" for k, v in sorted(n_cat.items(), key=lambda kv: -kv[1])[:3]]
+            headline = f"이번 주 항암 관련 {len(clusters)}개 이슈 중 " + ", ".join(parts) + " 순으로 많았습니다."
         # 유방암 워치: 상위에 이미 오른 건 제외하고 별도 3건 (중복 지목분도 제외)
         breast = [c for c in clusters if c["breast"] and c not in top and c.get("dup_of") is None][:3]
     section = render_section(week_label, start, end, headline, top, breast, trend, prev, args.demo, ai_used)
