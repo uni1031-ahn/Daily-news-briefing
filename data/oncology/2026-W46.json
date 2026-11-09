@@ -1,0 +1,409 @@
+{
+ "week": "2026-W46",
+ "start": "2026-11-02",
+ "end": "2026-11-09",
+ "headline": "이번 주 항암 관련 363개 이슈 중 기타 159건, CAR-T·세포치료 53건, 면역항암 41건 순으로 많았습니다.",
+ "demo": false,
+ "trend": {
+  "CAR-T": 55,
+  "ADC": 14,
+  "bispecific": 13,
+  "radioligand": 6,
+  "KRAS": 2,
+  "PD-1": 9,
+  "HER2": 11,
+  "TROP2": 1,
+  "in vivo CAR-T": 2,
+  "GLP-1": 1,
+  "TCE": 0,
+  "CDK4/6": 1,
+  "PROTAC": 0,
+  "mRNA vaccine": 2
+ },
+ "top": [
+  {
+   "id": 16,
+   "title": "삼성바이오에피스, 미국 면역항암학회서 '키트루다' 바이오시밀러 임상3상 결과 발표 - 비즈니스포스트",
+   "link": "https://news.google.com/rss/articles/CBMic0FVX3lxTFB0V3FlcFFUcnJhVmZkZ29QblJTSmExQnRqek8wR0N0VV9leGlLejAxYmtxcGNGYk9ZN3ppUUdXaVBwbUE5cldRbzRzek5Oc1J4eUg0aUFVYlBTbHJSNVlrLUJ3QmpSZWxoX1drZTlrSC1ucGM?oc=5",
+   "when": "2026-11-09T10:55:10+09:00",
+   "source": "비즈니스포스트",
+   "sources": [
+    "뉴스웍스",
+    "데일리메디팜",
+    "비즈니스포스트"
+   ],
+   "snippet": "삼성바이오에피스, 미국 면역항암학회서 '키트루다' 바이오시밀러 임상3상 결과 발표    비즈니스포스트",
+   "cat": "io",
+   "breast": false,
+   "score": 9.93,
+   "lang": "ko",
+   "members": [
+    {
+     "title": "삼성바이오에피스, 미국 면역항암학회서 '키트루다' 바이오시밀러 임상3상 결과 발표 - 비즈니스포스트",
+     "link": "https://news.google.com/rss/articles/CBMic0FVX3lxTFB0V3FlcFFUcnJhVmZkZ29QblJTSmExQnRqek8wR0N0VV9leGlLejAxYmtxcGNGYk9ZN3ppUUdXaVBwbUE5cldRbzRzek5Oc1J4eUg0aUFVYlBTbHJSNVlrLUJ3QmpSZWxoX1drZTlrSC1ucGM?oc=5",
+     "source": "비즈니스포스트"
+    },
+    {
+     "title": "삼성바이오에피스, 미국 면역항암학회서 '키트루다' 바이오시밀러 임상3상 결과 발표 - 비즈니스포스트",
+     "link": "https://news.google.com/rss/articles/CBMic0FVX3lxTFB0V3FlcFFUcnJhVmZkZ29QblJTSmExQnRqek8wR0N0VV9leGlLejAxYmtxcGNGYk9ZN3ppUUdXaVBwbUE5cldRbzRzek5Oc1J4eUg0aUFVYlBTbHJSNVlrLUJ3QmpSZWxoX1drZTlrSC1ucGM?oc=5",
+     "source": "비즈니스포스트"
+    },
+    {
+     "title": "삼성바이오에피스, 美 면역항암학회서 키트루다 바이오시밀러 3상 결과 발표 - 데일리메디팜",
+     "link": "https://news.google.com/rss/articles/CBMicEFVX3lxTE5lNmcxRlJ4aGg1d1lSTGF2SG5iNGFzSUF1dTV1WnBFbkFSSkdUVGpQeU9WdlNEelNUTWFBWEJsNUk1RHlOWWZ5MnAyMTVOM3p5bUlBaGxKWmNtNkZvTFllYUR0Y3N2Vjk5YVA5X05PRkc?oc=5",
+     "source": "데일리메디팜"
+    },
+    {
+     "title": "삼성바이오에피스, 美 면역항암학회서 키트루다 바이오시밀러 임상 3상 결과 발표 - 뉴스웍스",
+     "link": "https://news.google.com/rss/articles/CBMib0FVX3lxTE55eFMyd1RiZXUyTXJzTl9vQ0dISGdhT2pvQTBtSlEwbjdDVjVfNUhiLXFRZ3ZrUFBEbnMzY3lMWGE5aTlBNkdYWm9Uai1fZlE0anpybXFtZy1LVEs2Wm1pLW5UZlNMVUp1ZzBIeVFBc9IBc0FVX3lxTE03YzNGaHRObUJBdFU0dTJyM01tcnQxVWQ0WGN3dERFdjdHTk41YjA5RnQ5R1puMUxaV3Nxa0FUMmp0WlpxbTRja24xSWh1UzJkTFVkVnc3cHphbUkxZWRLVzM3QlhXWHg5YUdEeUdHM1pFVTg?oc=5",
+     "source": "뉴스웍스"
+    },
+    {
+     "title": "삼성바이오에피스, 美 면역항암학회서 키트루다 바이오시밀러 임상 3상 결과 발표 - 뉴스웍스",
+     "link": "https://news.google.com/rss/articles/CBMic0FVX3lxTE03YzNGaHRObUJBdFU0dTJyM01tcnQxVWQ0WGN3dERFdjdHTk41YjA5RnQ5R1puMUxaV3Nxa0FUMmp0WlpxbTRja24xSWh1UzJkTFVkVnc3cHphbUkxZWRLVzM3QlhXWHg5YUdEeUdHM1pFVTjSAXNBVV95cUxNN2MzRmh0Tm1CQXRVNHUycjNNbXJ0MVVkNFhjd3RERXY3R05ONWIwOUZ0OUdabjFMWldzcWtBVDJqdFpacW00Y2tuMUlodVMyZExVZFZ3N3B6YW1JMWVkS1czN0JYV1h4OWFHRHlHRzNaRVU4?oc=5",
+     "source": "뉴스웍스"
+    }
+   ]
+  },
+  {
+   "id": 17,
+   "title": "삼성바이오에피스, 美 면역항암학회서 SB27 임상 3상 동등성 확인 - 주간한국",
+   "link": "https://news.google.com/rss/articles/CBMidEFVX3lxTE5JbXdyYmowVVVrejJ6MVJaZFE5cjhLeEhMek54Rll6NldCdEM5bE5SMWh6MkNCdUMxUXhtRlBBanNPckNBdEJGbHBmN3ZON1g5bHpIMUxrTmpGN3hoVWtqcU5XRElVaWRUdkc2aHVRZWYxNjNa0gF0QVVfeXFMTkltd3JiajBVVWt6MnoxUlpkUTlyOEt4SEx6TnhGWXo2V0J0QzlsTlIxaHoyQ0J1QzFReG1GUEFqc09yQ0F0QkZscGY3dk43WDlsekgxTGtOakY3eGhVa2pxTldESVVpZFR2RzZodVFlZjE2M1o?oc=5",
+   "when": "2026-11-09T10:27:31+09:00",
+   "source": "주간한국",
+   "sources": [
+    "메디칼업저버",
+    "주간한국"
+   ],
+   "snippet": "삼성바이오에피스, 美 면역항암학회서 SB27 임상 3상 동등성 확인    주간한국",
+   "cat": "io",
+   "breast": false,
+   "score": 7.93,
+   "lang": "ko",
+   "members": [
+    {
+     "title": "삼성바이오에피스, 美 면역항암학회서 SB27 임상 3상 동등성 확인 - 주간한국",
+     "link": "https://news.google.com/rss/articles/CBMidEFVX3lxTE5JbXdyYmowVVVrejJ6MVJaZFE5cjhLeEhMek54Rll6NldCdEM5bE5SMWh6MkNCdUMxUXhtRlBBanNPckNBdEJGbHBmN3ZON1g5bHpIMUxrTmpGN3hoVWtqcU5XRElVaWRUdkc2aHVRZWYxNjNa0gF0QVVfeXFMTkltd3JiajBVVWt6MnoxUlpkUTlyOEt4SEx6TnhGWXo2V0J0QzlsTlIxaHoyQ0J1QzFReG1GUEFqc09yQ0F0QkZscGY3dk43WDlsekgxTGtOakY3eGhVa2pxTldESVVpZFR2RzZodVFlZjE2M1o?oc=5",
+     "source": "주간한국"
+    },
+    {
+     "title": "삼성바이오에피스, 美 면역항암학회서 SB27 임상 3상 동등성 확인 - 주간한국",
+     "link": "https://news.google.com/rss/articles/CBMicEFVX3lxTE5lSkgzbG5wYVktMWtOV2s1X3JWMjVldV9nNWdyQXF4aGhwaHluUXJlRWtQeHg1ZEs4bFdpZHhnTVdKT1NlUjJtenVXMmhBOTNkbkhJWlVSWmxGeU5mZHRnZlBvem1qVENGOU9FWjh3YnLSAXRBVV95cUxOSW13cmJqMFVVa3oyejFSWmRROXI4S3hITHpOeEZZejZXQnRDOWxOUjFoejJDQnVDMVF4bUZQQWpzT3JDQXRCRmxwZjd2TjdYOWx6SDFMa05qRjd4aFVranFOV0RJVWlkVHZHNmh1UWVmMTYzWg?oc=5",
+     "source": "주간한국"
+    },
+    {
+     "title": "삼성바이오에피스, 美 면역항암학회서 SB27 임상3상 결과 발표 - 메디칼업저버",
+     "link": "https://news.google.com/rss/articles/CBMia0FVX3lxTE9PQ0VqU3lkNXBneEswb3I1aFZmTEJZa3ZEVUhfVEMtdFY4MzNUN3lVYXZycGwtMUdkMzdqbUdjTENmdkRpS1BBLXROOWRVenp3ODNFY2VuYmRPOVJ3T1VrRjlVT1VZdzBNcjlZ?oc=5",
+     "source": "메디칼업저버"
+    }
+   ]
+  },
+  {
+   "id": 60,
+   "title": "美카테시안, 중증근무력증 CAR-T 내년 1분기 3상 결과 발표…허가 신청 추진 - 더바이오",
+   "link": "https://news.google.com/rss/articles/CBMicEFVX3lxTE5RTXhKeGNTQ0VWeFZESVhzckNPdjhWSURnQzliMXNsckZQTkRBTnhaT2VDeVJYendUejZob0I4ZXFlUTNQUjN0SWU2TzFVOG5sZDRuTmlINTl3UnQxbEU5b1UtNVBMa0NGQ1BBM1pvRHnSAXBBVV95cUxOUU14SnhjU0NFVnhWRElYc3JDT3Y4VklEZ0M5YjFzbHJGUE5EQU54Wk9lQ3lSWHp3VHo2aG9COGVxZVEzUFIzdEllNk8xVThubGQ0bk5pSDU5d1J0MWxFOW9VLTVQTGtDRkNQQTNab0R5?oc=5",
+   "when": "2026-11-08T11:39:57+09:00",
+   "source": "더바이오",
+   "sources": [
+    "더바이오"
+   ],
+   "snippet": "美카테시안, 중증근무력증 CAR-T 내년 1분기 3상 결과 발표…허가 신청 추진    더바이오",
+   "cat": "reg",
+   "breast": false,
+   "score": 7.61,
+   "lang": "ko",
+   "members": [
+    {
+     "title": "美카테시안, 중증근무력증 CAR-T 내년 1분기 3상 결과 발표…허가 신청 추진 - 더바이오",
+     "link": "https://news.google.com/rss/articles/CBMicEFVX3lxTE5RTXhKeGNTQ0VWeFZESVhzckNPdjhWSURnQzliMXNsckZQTkRBTnhaT2VDeVJYendUejZob0I4ZXFlUTNQUjN0SWU2TzFVOG5sZDRuTmlINTl3UnQxbEU5b1UtNVBMa0NGQ1BBM1pvRHnSAXBBVV95cUxOUU14SnhjU0NFVnhWRElYc3JDT3Y4VklEZ0M5YjFzbHJGUE5EQU54Wk9lQ3lSWHp3VHo2aG9COGVxZVEzUFIzdEllNk8xVThubGQ0bk5pSDU5d1J0MWxFOW9VLTVQTGtDRkNQQTNab0R5?oc=5",
+     "source": "더바이오"
+    },
+    {
+     "title": "美카테시안, 중증근무력증 CAR-T 내년 1분기 3상 결과 발표…허가 신청 추진 - 더바이오",
+     "link": "https://news.google.com/rss/articles/CBMibEFVX3lxTFA3UWxqMHc3YnRfSGFyZGZPM2JFcjI1elo0ZXJkbGFDMFVoQzdfODJyamlXa0pSOEhfTWRrY21YbmstZjZWVUhjem9jcU11RGFlbFQ2dDNGTnk3X0xFd2M2cVlpLTlwUXFZNms2ONIBcEFVX3lxTE5RTXhKeGNTQ0VWeFZESVhzckNPdjhWSURnQzliMXNsckZQTkRBTnhaT2VDeVJYendUejZob0I4ZXFlUTNQUjN0SWU2TzFVOG5sZDRuTmlINTl3UnQxbEU5b1UtNVBMa0NGQ1BBM1pvRHk?oc=5",
+     "source": "더바이오"
+    }
+   ]
+  },
+  {
+   "id": 79,
+   "title": "Joanna Sadowska: FDA Approves J&J’s Dual-Targeted Therapy for Head and Neck Cancer - Oncodaily",
+   "link": "https://news.google.com/rss/articles/CBMiaEFVX3lxTFB3TmR1S2RMa1Bzd3VsU25JX3RUamhNVWU4N05uMTdwa2taNFRWOElvZGdoTjZIRGd4YXdlTmtoSFFoZ0pDenJYQWV1Nnd6X1VTWGw0SGF2bEhkZDdNMTFtNzRoYm4wZndi?oc=5",
+   "when": "2026-11-07T22:31:13+09:00",
+   "source": "Oncodaily",
+   "sources": [
+    "MedPage Today",
+    "Oncodaily"
+   ],
+   "snippet": "Joanna Sadowska: FDA Approves J&J’s Dual-Targeted Therapy for Head and Neck Cancer    Oncodaily",
+   "cat": "reg",
+   "breast": false,
+   "score": 7.43,
+   "lang": "en",
+   "members": [
+    {
+     "title": "Joanna Sadowska: FDA Approves J&J’s Dual-Targeted Therapy for Head and Neck Cancer - Oncodaily",
+     "link": "https://news.google.com/rss/articles/CBMiaEFVX3lxTFB3TmR1S2RMa1Bzd3VsU25JX3RUamhNVWU4N05uMTdwa2taNFRWOElvZGdoTjZIRGd4YXdlTmtoSFFoZ0pDenJYQWV1Nnd6X1VTWGw0SGF2bEhkZDdNMTFtNzRoYm4wZndi?oc=5",
+     "source": "Oncodaily"
+    },
+    {
+     "title": "FDA Approves Dual-Targeted Therapy for Head and Neck Cancer - MedPage Today",
+     "link": "https://news.google.com/rss/articles/CBMidkFVX3lxTE1wYUdBQlhPQVpOTzY5QWR6Ym5qenQ0cXpKbllzNmwzbjN5WEQ0akpQdDA2OXVQYXBPS1pJUVRRMXdIZkZaZ3dSREY3SElTc0tuLWd2N3VtQTctby1RandNVmgyVFdSeU94U1BNZXZuczJRY1ljVWc?oc=5",
+     "source": "MedPage Today"
+    }
+   ]
+  },
+  {
+   "id": 106,
+   "title": "FDA Approves J&J’s Rybrevant Faspro with Halozyme’s Enhanze for Head and Neck Cancer - Contract Pharma",
+   "link": "https://news.google.com/rss/articles/CBMixgFBVV95cUxQeFF1T0FoMnUwNTdoYXV4UjdvNWFudGF2WEFJMThJVnJ0LTloTmpreV9IbUpiX3lPVXdieDNQTy0yWkc5ZHFZRTl4YlpBWlZDS2JRdmFRcVdBSnRQdXpEUER6MENGV1plS3pRVTdIaktoX01WQXYtaUpJVEVFNEt6ZEc1MXF4a3A3ekJ1dTVDcE94dFpNRHlJMkVoTkhUQmxsOUxTUU1ha1d2SWl3U1F3UnNPSVAzdmFsZUFMZ0xrdkdoTTlPMXc?oc=5",
+   "when": "2026-11-07T03:25:56+09:00",
+   "source": "Contract Pharma",
+   "sources": [
+    "BioPharm International",
+    "Contract Pharma"
+   ],
+   "snippet": "FDA Approves J&J’s Rybrevant Faspro with Halozyme’s Enhanze for Head and Neck Cancer    Contract Pharma",
+   "cat": "reg",
+   "breast": false,
+   "score": 7.16,
+   "lang": "en",
+   "members": [
+    {
+     "title": "FDA Approves J&J’s Rybrevant Faspro with Halozyme’s Enhanze for Head and Neck Cancer - Contract Pharma",
+     "link": "https://news.google.com/rss/articles/CBMixgFBVV95cUxQeFF1T0FoMnUwNTdoYXV4UjdvNWFudGF2WEFJMThJVnJ0LTloTmpreV9IbUpiX3lPVXdieDNQTy0yWkc5ZHFZRTl4YlpBWlZDS2JRdmFRcVdBSnRQdXpEUER6MENGV1plS3pRVTdIaktoX01WQXYtaUpJVEVFNEt6ZEc1MXF4a3A3ekJ1dTVDcE94dFpNRHlJMkVoTkhUQmxsOUxTUU1ha1d2SWl3U1F3UnNPSVAzdmFsZUFMZ0xrdkdoTTlPMXc?oc=5",
+     "source": "Contract Pharma"
+    },
+    {
+     "title": "FDA Approves Rybrevant Faspro for Advanced Head and Neck Cancer - BioPharm International",
+     "link": "https://news.google.com/rss/articles/CBMiswFBVV95cUxPdkI5WWJzV215bks5alI3WEFEd0Q4ampXQ1AzWG45N3NYTXc4SDhHTDJob25GV0w4Mm5CZzJjdVgwTTdKSUY4MXZXUTlYa3NlTUJQX1RtZ0VvNlBvR1dOUmNmNFJDeF9CZlFjRWdJSXFpQUU5YXJGbVlFajVaWnVIXzYwUWNxc1FBRUxZQmhNSFJwWVZCQklOZFJnXzZhU1B1UnFTejlQbFBlcWdTYmVQVG9jRQ?oc=5",
+     "source": "BioPharm International"
+    }
+   ]
+  },
+  {
+   "id": 124,
+   "title": "Johnson & Johnson secures FDA approval for RYBREVANT FASPRO in head and neck cancer - Manufacturing Chemist",
+   "link": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxOUVF4am03YUNGd0hjU1p3MHRoZUt0QWE1cWpxSHo0Yzl6ajF0N2JNQjVkaE1QSGMtb2VkOFZraXRpTmpqYkRsMl9iOVpVVUtldll2ZDhMamV6Q2xtM1NDRGh6NmFYeDdlWTd5Sm9EbGplNFJFYm9NcWFjQVJzQVl0RFJBWGhmZ1FyMWtr?oc=5",
+   "when": "2026-11-06T23:38:21+09:00",
+   "source": "Manufacturing Chemist",
+   "sources": [
+    "Manufacturing Chemist",
+    "Pharmaceutical Executive"
+   ],
+   "snippet": "Johnson & Johnson secures FDA approval for RYBREVANT FASPRO in head and neck cancer    Manufacturing Chemist",
+   "cat": "reg",
+   "breast": false,
+   "score": 7.11,
+   "lang": "en",
+   "members": [
+    {
+     "title": "Johnson & Johnson secures FDA approval for RYBREVANT FASPRO in head and neck cancer - Manufacturing Chemist",
+     "link": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxOUVF4am03YUNGd0hjU1p3MHRoZUt0QWE1cWpxSHo0Yzl6ajF0N2JNQjVkaE1QSGMtb2VkOFZraXRpTmpqYkRsMl9iOVpVVUtldll2ZDhMamV6Q2xtM1NDRGh6NmFYeDdlWTd5Sm9EbGplNFJFYm9NcWFjQVJzQVl0RFJBWGhmZ1FyMWtr?oc=5",
+     "source": "Manufacturing Chemist"
+    },
+    {
+     "title": "FDA Grants Accelerated Approval to Rybrevant Faspro in Head and Neck Cancer - Pharmaceutical Executive",
+     "link": "https://news.google.com/rss/articles/CBMikwFBVV95cUxQcVRTVDZFTEFRX0JOTHNHVXNHZlp3NEV2SUtlM0NMVE5LUWExQ29BSjZUY1VhNWh5UnlrNGNoM3JBMWpWajhzRnU5OUp3OWJGZTljcFpYZlVRWGR1aHJSaXh4YTZwSnF2cU9VVkRubG9maGc0aHRVcmMxZnVpQXphWXV5R3duUWx3WHpMSU9UQTN1WkU?oc=5",
+     "source": "Pharmaceutical Executive"
+    }
+   ]
+  },
+  {
+   "id": 153,
+   "title": "J&J Announces US FDA Approval Of Rybrevant Faspro As First And Only Dual-Targeted Therapy For Advanced Head And Neck Cancer - TradingView",
+   "link": "https://news.google.com/rss/articles/CBMingJBVV95cUxQMXJNT3NlMmtPQURWTW9qRmJTMVEzbTVid2xYMWFGN3h4WWZvOEpIcTV6a0p1MzlBY0NobEdMM0c3VTgydzFPLVZLb2JrNHR3cTVKSTVYa1FaTXVqdEl0MlR0cHl2ZUI1Rm1MbkV0SWIyZzJmYXRYU0tDTklRSFlCbGlGcElrWHRSVDVpeVNvYmsySmd5ZW1VMDl6bktqZ3k0WEVwT1c3cFg4S2VsYjJMTkZJLVVTdmxYd3FrSVM0ejQ2VHVCRm5hdUFHd0NCeDJvbXY4OEdrMVIyeUdCRWhfbExfQUxLM1IzSjNsVG9Udk9yb3RYVVFmeFVTbm5wa3hTUHRwc2pUTnlXdlBlSElGZFRVSVhoN2FMNnRHbHZR?oc=5",
+   "when": "2026-11-06T11:06:00+09:00",
+   "source": "TradingView",
+   "sources": [
+    "TradingView",
+    "WBOC TV"
+   ],
+   "snippet": "J&J Announces US FDA Approval Of Rybrevant Faspro As First And Only Dual-Targeted Therapy For Advanced Head And Neck Cancer    TradingView",
+   "cat": "reg",
+   "breast": false,
+   "score": 6.94,
+   "lang": "en",
+   "members": [
+    {
+     "title": "J&J Announces US FDA Approval Of Rybrevant Faspro As First And Only Dual-Targeted Therapy For Advanced Head And Neck Cancer - TradingView",
+     "link": "https://news.google.com/rss/articles/CBMingJBVV95cUxQMXJNT3NlMmtPQURWTW9qRmJTMVEzbTVid2xYMWFGN3h4WWZvOEpIcTV6a0p1MzlBY0NobEdMM0c3VTgydzFPLVZLb2JrNHR3cTVKSTVYa1FaTXVqdEl0MlR0cHl2ZUI1Rm1MbkV0SWIyZzJmYXRYU0tDTklRSFlCbGlGcElrWHRSVDVpeVNvYmsySmd5ZW1VMDl6bktqZ3k0WEVwT1c3cFg4S2VsYjJMTkZJLVVTdmxYd3FrSVM0ejQ2VHVCRm5hdUFHd0NCeDJvbXY4OEdrMVIyeUdCRWhfbExfQUxLM1IzSjNsVG9Udk9yb3RYVVFmeFVTbm5wa3hTUHRwc2pUTnlXdlBlSElGZFRVSVhoN2FMNnRHbHZR?oc=5",
+     "source": "TradingView"
+    },
+    {
+     "title": "Johnson & Johnson announces U.S. FDA Approval of RYBREVANT FASPRO™ (amivantamab and hyaluronidase-lpuj) as First and Only Dual-Targeted Therapy for Advanced Head and Neck Cancer - WBOC TV",
+     "link": "https://news.google.com/rss/articles/CBMiqgJBVV95cUxOTnJnRl8zRzR3TkJVa1VIY0d5MXRLOWhsU3VUeVdwX1VydXR6NlB1c2didWdoSjIyZWJEVEpOckJuTHFSd0NKRnkxZDJUb19iVkZpN1BocVZMck5MQ285a3QwbGROUDU1X3dqcmN1clZVal9Sc3VZa2xCdlh3b0VoMWhTQ1VybFdFYzZJQ21Oa0RNRC01MjAwWWV4T3huWnNBQUNONl9tUDJVNjE3M2YyNHRxTDZQcmFmYzAxT2JrNmlJWGd6aEtBNEdZYmNmYXpEbVUzS0NzTGk1WkdfaDV2aTBZaFFPWG5xWm1mRTltTF9IaU1kTXRvUjVoUFFDdlUzamZxa29SVWVuV3dvY0hTUmhYV29Ma2FMVlVBZHJ5Ujl3NjVadncwdjhn?oc=5",
+     "source": "WBOC TV"
+    }
+   ]
+  },
+  {
+   "id": 157,
+   "title": "FDA Approves SC Amivantamab for Recurrent/Metastatic HNSCC - CancerNetwork",
+   "link": "https://news.google.com/rss/articles/CBMimAFBVV95cUxPTGMtTXJpanM1SlpfR05jb0VKMTVMc0pBU1hoeVo5WnR6WTdhaDhTbWlEZGR1SVhnNEN0bUs3TlkyeDVXdjF2by04RXlaTlFsb2RaaGFqLVFxVmlJbl9Qc0xPMVdLZnBSMVg5R1JCU2Z6UUQwaDMwRndReWhNN193endpUzNTT2xEODJhd0JOMWM4OThjM2VBTQ?oc=5",
+   "when": "2026-11-06T09:04:08+09:00",
+   "source": "CancerNetwork",
+   "sources": [
+    "CancerNetwork",
+    "Targeted Oncology"
+   ],
+   "snippet": "FDA Approves SC Amivantamab for Recurrent/Metastatic HNSCC    CancerNetwork",
+   "cat": "reg",
+   "breast": false,
+   "score": 6.91,
+   "lang": "en",
+   "members": [
+    {
+     "title": "FDA Approves SC Amivantamab for Recurrent/Metastatic HNSCC - CancerNetwork",
+     "link": "https://news.google.com/rss/articles/CBMimAFBVV95cUxPTGMtTXJpanM1SlpfR05jb0VKMTVMc0pBU1hoeVo5WnR6WTdhaDhTbWlEZGR1SVhnNEN0bUs3TlkyeDVXdjF2by04RXlaTlFsb2RaaGFqLVFxVmlJbl9Qc0xPMVdLZnBSMVg5R1JCU2Z6UUQwaDMwRndReWhNN193endpUzNTT2xEODJhd0JOMWM4OThjM2VBTQ?oc=5",
+     "source": "CancerNetwork"
+    },
+    {
+     "title": "FDA Approves Amivantamab and Hyaluronidase for Recurrent/Metastatic HNSCC - Targeted Oncology",
+     "link": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxQNTJLaWFKeXVHTDVpQWUzN0dwQkZ0cU1BeXRnZ1FCLTNyV0NrT3ZZZXdBQTQ5RHpXMm9yRVgxNUxnSVJZV0FhSXhqSFIzd0FYUTVDdXJKSllfS2xmQmVxdjdzX0R4Mi1QeU5tZXJWbW82UFFVLU00Nlc1emNFSDg5aWlDeXoxNjdZNWM2cjV1bUczUmFxNTR6UG5ZQU85NkRCUjlxMGJNakswdw?oc=5",
+     "source": "Targeted Oncology"
+    }
+   ]
+  },
+  {
+   "id": 357,
+   "title": "국산 CAR-T ‘림카토’, 2차 치료로 확대 추진…큐로셀, 3상 변경승인 신청 - 쿠키뉴스",
+   "link": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE9seU9vTWUyQmpwWUJ6OFZ5dHdVNGNQUHFNN2dsTXpqc28tRGl3d2ViNUg2NnRBSTVRZUVKc2pzdVhxandOXzd1MDQyVzk0WGRFdHFjSFNxVTJGeGlhdm1MNUJIaw?oc=5",
+   "when": "2026-11-02T04:50:13+09:00",
+   "source": "쿠키뉴스",
+   "sources": [
+    "쿠키뉴스"
+   ],
+   "snippet": "국산 CAR-T ‘림카토’, 2차 치료로 확대 추진…큐로셀, 3상 변경승인 신청    쿠키뉴스",
+   "cat": "reg",
+   "breast": false,
+   "score": 6,
+   "lang": "ko",
+   "members": [
+    {
+     "title": "국산 CAR-T ‘림카토’, 2차 치료로 확대 추진…큐로셀, 3상 변경승인 신청 - 쿠키뉴스",
+     "link": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE9seU9vTWUyQmpwWUJ6OFZ5dHdVNGNQUHFNN2dsTXpqc28tRGl3d2ViNUg2NnRBSTVRZUVKc2pzdVhxandOXzd1MDQyVzk0WGRFdHFjSFNxVTJGeGlhdm1MNUJIaw?oc=5",
+     "source": "쿠키뉴스"
+    }
+   ]
+  },
+  {
+   "id": 0,
+   "title": "케이메디허브, 간세포암 표적항암제 'ETN101' 미국 임상 진입 지원 - 의학신문",
+   "link": "https://news.google.com/rss/articles/CBMiakFVX3lxTE5yb0lBT2Vpc01najdLRkhxTlIxQ25VQnhIX19oemRsRDV1bGNmODVOVmJpbkxfMkJLaGVpVzFfRGpXZnZKM2JsZ2MycThwRTNDa0RwX09qbllGb1VPdlFYSkNaRjdNUGZwWnc?oc=5",
+   "when": "2026-11-09T14:47:48+09:00",
+   "source": "의학신문",
+   "sources": [
+    "매일일보",
+    "의학신문"
+   ],
+   "snippet": "케이메디허브, 간세포암 표적항암제 'ETN101' 미국 임상 진입 지원    의학신문",
+   "cat": "targeted",
+   "breast": false,
+   "score": 5.99,
+   "lang": "ko",
+   "members": [
+    {
+     "title": "케이메디허브, 간세포암 표적항암제 'ETN101' 미국 임상 진입 지원 - 의학신문",
+     "link": "https://news.google.com/rss/articles/CBMiakFVX3lxTE5yb0lBT2Vpc01najdLRkhxTlIxQ25VQnhIX19oemRsRDV1bGNmODVOVmJpbkxfMkJLaGVpVzFfRGpXZnZKM2JsZ2MycThwRTNDa0RwX09qbllGb1VPdlFYSkNaRjdNUGZwWnc?oc=5",
+     "source": "의학신문"
+    },
+    {
+     "title": "케이메디허브, 간세포암 표적항암제 'ETN101' 미국 임상 진입 지원 - 의학신문",
+     "link": "https://news.google.com/rss/articles/CBMiakFVX3lxTE5yb0lBT2Vpc01najdLRkhxTlIxQ25VQnhIX19oemRsRDV1bGNmODVOVmJpbkxfMkJLaGVpVzFfRGpXZnZKM2JsZ2MycThwRTNDa0RwX09qbllGb1VPdlFYSkNaRjdNUGZwWnc?oc=5",
+     "source": "의학신문"
+    },
+    {
+     "title": "케이메디허브, 간세포암 표적항암제 'ETN101' 미국 임상 개발 지원 - 매일일보",
+     "link": "https://news.google.com/rss/articles/CBMiZEFVX3lxTFBxMTVjMV9jUU4yYVRlVU9UOGw3eE02NnAtOGs2U1NuRm92QjZoUGVlR3VDNWJTdmV6RlE0T1pSSkVZU2M0dEtjd0ZwSVdqc1Z6QlFQc2V4Ymw4ZDJQUVlqeHFzMVQ?oc=5",
+     "source": "매일일보"
+    },
+    {
+     "title": "케이메디허브, 간세포암 표적항암제 'ETN101' 미국 임상 개발 지원 - 매일일보",
+     "link": "https://news.google.com/rss/articles/CBMiZEFVX3lxTFBxMTVjMV9jUU4yYVRlVU9UOGw3eE02NnAtOGs2U1NuRm92QjZoUGVlR3VDNWJTdmV6RlE0T1pSSkVZU2M0dEtjd0ZwSVdqc1Z6QlFQc2V4Ymw4ZDJQUVlqeHFzMVQ?oc=5",
+     "source": "매일일보"
+    }
+   ]
+  }
+ ],
+ "breast": [
+  {
+   "id": 146,
+   "title": "포항세명기독병원 백남선 암병원장, 국제학술대회·글로벌 웨비나서 유방암 치료 경험 공유 - NSP통신",
+   "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE1fWG9OaWhMb0pLNXFtMWNuT0UzM2lRQ1Y4RVFqcEc2QzkwS0VXZkxDWmZNdldicjl1S1FfX1NTUm9PNG5uRTEtdUwwTjE5N3EzM2RUXzJpUGxJNUg4dHZUOQ?oc=5",
+   "when": "2026-11-06T14:46:35+09:00",
+   "source": "NSP통신",
+   "sources": [
+    "NSP통신",
+    "아이뉴스24"
+   ],
+   "snippet": "포항세명기독병원 백남선 암병원장, 국제학술대회·글로벌 웨비나서 유방암 치료 경험 공유    NSP통신",
+   "cat": "other",
+   "breast": true,
+   "score": 4.99,
+   "lang": "ko",
+   "members": [
+    {
+     "title": "포항세명기독병원 백남선 암병원장, 국제학술대회·글로벌 웨비나서 유방암 치료 경험 공유 - NSP통신",
+     "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE1fWG9OaWhMb0pLNXFtMWNuT0UzM2lRQ1Y4RVFqcEc2QzkwS0VXZkxDWmZNdldicjl1S1FfX1NTUm9PNG5uRTEtdUwwTjE5N3EzM2RUXzJpUGxJNUg4dHZUOQ?oc=5",
+     "source": "NSP통신"
+    },
+    {
+     "title": "세명기독병원 백남선 암병원장, 국제무대서 유방암 진료 경험 공유 - 아이뉴스24",
+     "link": "https://news.google.com/rss/articles/CBMiS0FVX3lxTE9UTmgyMUZHVHZibEtVRjhEeGlYSGx0dEFzX2NkbVJIdmZ6dDFyR2tkVEUwelVGczl3ekt6dV96Wmc2aXFDNDROSlhLcw?oc=5",
+     "source": "아이뉴스24"
+    }
+   ]
+  },
+  {
+   "id": 257,
+   "title": "Tucatinib With Trastuzumab and Pertuzumab Approved for HER2-Positive Breast Cancer Maintenance - Clinical Oncology News",
+   "link": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxNM1FNb21ybWMtaVZEVXVSY1VhQTBkX050ZlNhd1JJbzNYU3FrMEdwVnVkWDFnb25DLTNOZlBQT1JudkJmVnVEdHVxa1RiblR6UFBTUEI3aElqX05NZWdfZEE2WGpuVTVLc1czUEQyX2FnT0IzS3p5MDJnNEdZanRTRmctMEt4RHhrUktlMWxySkE4dVZUZXhKZENJbWhMQjBxZ0xndFg4UXgweTBjdUJfSnVrOF9uV0tkdzFGMUxxQkVSa1E?oc=5",
+   "when": "2026-11-04T19:07:30+09:00",
+   "source": "Clinical Oncology News",
+   "sources": [
+    "Clinical Oncology News"
+   ],
+   "snippet": "Tucatinib With Trastuzumab and Pertuzumab Approved for HER2-Positive Breast Cancer Maintenance    Clinical Oncology News",
+   "cat": "reg",
+   "breast": true,
+   "score": 4.38,
+   "lang": "en",
+   "members": [
+    {
+     "title": "Tucatinib With Trastuzumab and Pertuzumab Approved for HER2-Positive Breast Cancer Maintenance - Clinical Oncology News",
+     "link": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxNM1FNb21ybWMtaVZEVXVSY1VhQTBkX050ZlNhd1JJbzNYU3FrMEdwVnVkWDFnb25DLTNOZlBQT1JudkJmVnVEdHVxa1RiblR6UFBTUEI3aElqX05NZWdfZEE2WGpuVTVLc1czUEQyX2FnT0IzS3p5MDJnNEdZanRTRmctMEt4RHhrUktlMWxySkE4dVZUZXhKZENJbWhMQjBxZ0xndFg4UXgweTBjdUJfSnVrOF9uV0tkdzFGMUxxQkVSa1E?oc=5",
+     "source": "Clinical Oncology News"
+    }
+   ]
+  },
+  {
+   "id": 313,
+   "title": "Camizestrant Approval Paves the Way for ctDNA-Guided Switching in Emergent ESR1-Mutated HR+/HER2– Advanced Breast Cancer - OncLive",
+   "link": "https://news.google.com/rss/articles/CBMi4AFBVV95cUxQOUZUNm15amNkUEJJNmp2cVVOWVZ6WGxtcUJtWUs2dnEtVUR1TUVOcE45UG95UV9HcllrM2FvaWQ5NmZzQjhTZG8zbVFkVDVuR2RuamZkTnp1MEJqYzhpckowYk5idE5SbWc0V0RZTzlqTnRUdTQyOVNMZEJfai0wc2c4cTd6SS1qLXVlTTVZV0ZER0tvazZOSkxMOXpWb3NKLThKaWN6R2c1ajEzTG55LTFsVlB0cFJNSU1NZndnTnVNY1RNWUk0Xy1MSXVnX0VHeEtyY2NudEliYW9xWHlFRw?oc=5",
+   "when": "2026-11-03T08:42:47+09:00",
+   "source": "OncLive",
+   "sources": [
+    "OncLive"
+   ],
+   "snippet": "Camizestrant Approval Paves the Way for ctDNA-Guided Switching in Emergent ESR1-Mutated HR+/HER2– Advanced Breast Cancer    OncLive",
+   "cat": "reg",
+   "breast": true,
+   "score": 4,
+   "lang": "en",
+   "members": [
+    {
+     "title": "Camizestrant Approval Paves the Way for ctDNA-Guided Switching in Emergent ESR1-Mutated HR+/HER2– Advanced Breast Cancer - OncLive",
+     "link": "https://news.google.com/rss/articles/CBMi4AFBVV95cUxQOUZUNm15amNkUEJJNmp2cVVOWVZ6WGxtcUJtWUs2dnEtVUR1TUVOcE45UG95UV9HcllrM2FvaWQ5NmZzQjhTZG8zbVFkVDVuR2RuamZkTnp1MEJqYzhpckowYk5idE5SbWc0V0RZTzlqTnRUdTQyOVNMZEJfai0wc2c4cTd6SS1qLXVlTTVZV0ZER0tvazZOSkxMOXpWb3NKLThKaWN6R2c1ajEzTG55LTFsVlB0cFJNSU1NZndnTnVNY1RNWUk0Xy1MSXVnX0VHeEtyY2NudEliYW9xWHlFRw?oc=5",
+     "source": "OncLive"
+    },
+    {
+     "title": "Camizestrant Approval Paves the Way for ctDNA-Guided Switching in Emergent ESR1-Mutated HR+/HER2– Advanced Breast Cancer - OncLive",
+     "link": "https://news.google.com/rss/articles/CBMi4AFBVV95cUxQOUZUNm15amNkUEJJNmp2cVVOWVZ6WGxtcUJtWUs2dnEtVUR1TUVOcE45UG95UV9HcllrM2FvaWQ5NmZzQjhTZG8zbVFkVDVuR2RuamZkTnp1MEJqYzhpckowYk5idE5SbWc0V0RZTzlqTnRUdTQyOVNMZEJfai0wc2c4cTd6SS1qLXVlTTVZV0ZER0tvazZOSkxMOXpWb3NKLThKaWN6R2c1ajEzTG55LTFsVlB0cFJNSU1NZndnTnVNY1RNWUk0Xy1MSXVnX0VHeEtyY2NudEliYW9xWHlFRw?oc=5",
+     "source": "OncLive"
+    }
+   ]
+  }
+ ],
+ "total_clusters": 363
+}
