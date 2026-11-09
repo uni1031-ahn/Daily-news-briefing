@@ -49,9 +49,9 @@ HEADERS = {"User-Agent": UA, "Accept-Language": "ko-KR,ko;q=0.9,en;q=0.5",
 # 엑셀 목록(12개 기관). insurance_only=True 인 기관은 보험 분야 보도자료만 표시.
 # link_fmt: 목록의 링크가 javascript:함수('번호') 형태일 때 상세 주소를 만드는 틀 ({id} 자리에 번호)
 INSTITUTIONS = [
-    dict(field="보험", name="금융위원회", url="https://www.fsc.go.kr/no010101", insurance_only=True),
+    dict(field="보험", name="금융위원회", url="https://www.fsc.go.kr/no010101", topic="보험"),
     dict(field="보험", name="금융감독원", url="https://www.fss.or.kr/fss/bbs/B0000188/list.do?menuNo=200218",
-         insurance_only=True),
+         topic="보험"),
     dict(field="보험", name="보험개발원", url="https://www.kidi.or.kr/user/nd11592.do",
          link_re=r"goBoardView\('[^']*',\s*'View',\s*'(\w+)'",
          link_fmt="https://www.kidi.or.kr/user/nd11592.do?View&boardNo={0}"),
@@ -72,11 +72,21 @@ INSTITUTIONS = [
          url="https://www.kdca.go.kr/kdca/2848/subview.do?enc=Zm5jdDF8QEB8JTJGYmJzJTJGa2RjYSUyRjQyJTJGYXJ0Y2xMaXN0LmRvJTNG",
          link_re=r"jf_viewArtcl\('(\w+)'(?:%20|\s|,|')+(\d+)(?:%20|\s|,|')+(\d+)",
          link_fmt="https://www.kdca.go.kr/bbs/{0}/{1}/{2}/artclView.do"),
-    dict(field="의료", name="식품의약품안전처", url="https://www.mfds.go.kr/brd/m_99/list.do"),
+    dict(field="의료", name="식품의약품안전처", url="https://www.mfds.go.kr/brd/m_99/list.do", topic="식품 제외"),
 ]
 
 # 보험 분야 판별 키워드 (금융위·금감원용)
 INS_RE = re.compile(r"보험|손보|생보|지급여력|K-?ICS|IFRS\s?17|설계사|실손|(?<![A-Za-z])GA(?![A-Za-z])")
+# 의약품 분야 판별 키워드 (식약처용)
+DRUG_RE = re.compile(r"의약품|의약외품|의약|마약|향정|신약|약국|약사|약물|백신|치료제|바이오의약|임상시험|의료제품|제약|"
+                     r"첨단재생|희귀의약|항암제|주사제|처방|조제|복약|오남용|리베이트")
+FOOD_RE = re.compile(r"식품|식중독|급식|농산물|수산물|축산물|식육|먹거리|김장|HACCP|이물|영양|나트륨|당류|저염|저당|단짠|김치|건강기능")
+KEEP_RE = re.compile(r"의약|의료|제약|약국|약사|백신|치료|임상|진단|마약|화장품|바이오|허가|심사")
+TOPICS = {
+    "식품 제외": dict(exclude=FOOD_RE, keep=KEEP_RE, empty="식품 관련 제외"),
+    "보험": dict(re=INS_RE, dept=re.compile("보험"), body=re.compile("보험"), body_n=3),
+    "의약품": dict(re=DRUG_RE, dept=re.compile("의약품|마약|약무|의료제품|바이오|임상|약"), body=re.compile("의약품|마약|약국|약사"), body_n=3),
+}
 
 
 # ───────────────────────── 공통 도구 ─────────────────────────
@@ -281,8 +291,9 @@ def rel_label(d: date, today: date) -> str:
     return {0: "오늘", 1: "어제", 2: "그제"}.get(n, f"{n}일 전" if n > 0 else "")
 
 
-def is_insurance_quick(item) -> bool:
-    return bool(INS_RE.search(item["title"])) or "보험" in (item.get("dept") or "")
+def is_insurance_quick(item, topic="보험") -> bool:
+    t = TOPICS[topic]
+    return bool(t["re"].search(item["title"])) or bool(t["dept"].search(item.get("dept") or ""))
 
 
 # ───────────────────────── 본문(상세 페이지)에서 요약·담당부서 추출 ─────────────────────────
@@ -368,7 +379,7 @@ def detail_info(session, url):
 
 # ───────────────────────── 기관별 수집 ─────────────────────────
 def fetch_institution(inst, debug_dir=None):
-    st = dict(name=inst["name"], field=inst["field"], insurance_only=bool(inst.get("insurance_only")),
+    st = dict(name=inst["name"], field=inst["field"], insurance_only=bool(inst.get("topic")), topic=inst.get("topic") or "",
               ok=False, http=None, kb=0, rows=0, newest=None, total_window=0, error="", note="")
     items = []
     session = make_session()
@@ -422,19 +433,29 @@ def select_window(items, now):
 
 
 def apply_insurance_filter(inst, st, win, session, check_only=False):
-    """금융위·금감원: 보험 분야만. 제목/담당부서 → 애매한 건은 본문 확인."""
+    """금융위·금감원: 보험 분야만. 제목/담당부서 → 애매한 건은 본문 확인. 식약처: 식품 관련만 제외."""
+    tp = TOPICS[inst["topic"]]
+    if tp.get("exclude"):
+        kept, dropped = [], []
+        for it in win:
+            text = it["title"] + " " + (it.get("dept") or "")
+            if tp["exclude"].search(text) and not tp["keep"].search(text):
+                dropped.append(it)
+            else:
+                kept.append(it)
+        return kept, dropped
     kept, undecided, dropped = [], [], []
     for it in win:
-        (kept if is_insurance_quick(it) else undecided).append(it)
+        (kept if is_insurance_quick(it, inst["topic"]) else undecided).append(it)
     if undecided and not check_only:
         for it in undecided:
             txt, dept, _ = detail_info(session, it["link"]) if not it["link_is_list"] else ("", "", "")
             it["_detail"] = (txt, dept)
-            if "보험" in dept:
+            if TOPICS[inst["topic"]]["dept"].search(dept):
                 it["dept"] = it.get("dept") or dept
                 it["basis"] = "담당부서"
                 kept.append(it)
-            elif len(re.findall("보험", (it["title"] + " " + txt)[:2500])) >= 3:
+            elif len(TOPICS[inst["topic"]]["body"].findall((it["title"] + " " + txt)[:2500])) >= TOPICS[inst["topic"]]["body_n"]:
                 it["basis"] = "본문 키워드"
                 kept.append(it)
             else:
@@ -506,7 +527,7 @@ def build_email_html(results, now) -> str:
             cur_field = inst["field"]
         sub = f"({len(items)}건)"
         if inst.get("insurance_only") and st["ok"]:
-            sub = f"(보험 {len(items)}건 · 전체 {st['total_window']}건 중)"
+            sub = f"({inst['topic']} {len(items)}건 · 전체 {st['total_window']}건 중)"
         out.append(
             f"<tr><td style='padding:12px 24px 4px;font-size:15px;font-weight:bold;color:#222;'>"
             f"▌{esc(inst['name'])} <span style='font-weight:normal;color:#888;font-size:13px;'>{esc(sub)}</span></td></tr>")
@@ -518,7 +539,7 @@ def build_email_html(results, now) -> str:
         if not items:
             out.append(
                 f"<tr><td style='padding:0 24px 6px;font-size:12.5px;color:#888;'>최근 {WINDOW_HOURS}시간 이내 새 보도자료 없음"
-                f"{' (보험 분야 기준)' if inst.get('insurance_only') else ''}</td></tr>")
+                f"{(' (' + TOPICS[inst['topic']].get('empty', inst['topic'] + ' 분야 기준') + ')') if inst.get('topic') else ''}</td></tr>")
             continue
         rows = []
         for i, it in enumerate(items, 1):
@@ -527,7 +548,7 @@ def build_email_html(results, now) -> str:
             if it.get("dept"):
                 meta.append(esc(it["dept"]))
             if it.get("basis"):
-                meta.append(f"보험 분야 판단: {esc(it['basis'])}")
+                meta.append(f"{inst['topic']} 분야 판단: {esc(it['basis'])}")
             summ = (f"<div style='font-size:12.5px;color:#444;margin-top:1px;line-height:1.35;'>{esc(it['summary'])}</div>"
                     if it.get("summary") else "")
             rows.append(
@@ -548,7 +569,7 @@ def build_email_html(results, now) -> str:
             "<th style='padding:4px;border:1px solid #dde2e8;font-size:13px;color:#333;'>보도자료</th></tr>"
             + "".join(rows) + "</table></td></tr>")
     foot = ("이 메일은 자동으로 발송되었습니다. 게시일 기준 최근 "
-            f"{WINDOW_HOURS}시간 이내 보도자료이며, 금융위원회·금융감독원은 보험 분야만 표시합니다. "
+            f"{WINDOW_HOURS}시간 이내 보도자료이며, 금융위원회·금융감독원은 보험 분야만, 식품의약품안전처는 식품 관련을 제외하고 표시합니다. "
             "요약문은 보도자료 본문 앞부분을 바탕으로 만들어져 원문과 다를 수 있으니 중요한 내용은 원문을 확인하세요.")
     if failed:
         foot += f" <b style='color:#92400e;'>수집 실패 기관: {esc(', '.join(failed))}</b>"
@@ -618,7 +639,7 @@ def status_line(st, n_win=None, n_show=None) -> str:
     if n_win is not None:
         s += f" · 최근 {WINDOW_HOURS}시간 {n_win}건"
     if n_show is not None and st["insurance_only"]:
-        s += f" → 보험 {n_show}건"
+        s += f" → {st['topic']} {n_show}건"
     return s
 
 
@@ -653,13 +674,13 @@ def main():
         win = select_window(items, now) if st["ok"] else []
         st["total_window"] = len(win)
         shown, dropped = win, []
-        if st["ok"] and inst.get("insurance_only"):
+        if st["ok"] and inst.get("topic"):
             shown, dropped = apply_insurance_filter(inst, st, win, session, check_only=args.check)
         print(status_line(st, len(win) if st["ok"] else None, len(shown)))
         if st.get("note"):
             print(f"      {st['note']}")
         for d in dropped:
-            print(f"      · 보험 외로 제외: {d['title']} ({d['date']})")
+            print(f"      · 분야 외로 제외: {d['title']} ({d['date']})")
         results.append(dict(inst=inst, st=st, items=shown))
         all_shown += shown
 
