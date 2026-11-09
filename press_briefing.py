@@ -72,7 +72,7 @@ INSTITUTIONS = [
          url="https://www.kdca.go.kr/kdca/2848/subview.do?enc=Zm5jdDF8QEB8JTJGYmJzJTJGa2RjYSUyRjQyJTJGYXJ0Y2xMaXN0LmRvJTNG",
          link_re=r"jf_viewArtcl\('(\w+)'(?:%20|\s|,|')+(\d+)(?:%20|\s|,|')+(\d+)",
          link_fmt="https://www.kdca.go.kr/bbs/{0}/{1}/{2}/artclView.do"),
-    dict(field="의료", name="식품의약품안전처", url="https://www.mfds.go.kr/brd/m_99/list.do", topic="식품 제외"),
+    dict(field="의료", name="식품의약품안전처", url="https://www.mfds.go.kr/brd/m_99/list.do", topic="의료·제약"),
 ]
 
 # 보험 분야 판별 키워드 (금융위·금감원용)
@@ -80,10 +80,12 @@ INS_RE = re.compile(r"보험|손보|생보|지급여력|K-?ICS|IFRS\s?17|설계�
 # 의약품 분야 판별 키워드 (식약처용)
 DRUG_RE = re.compile(r"의약품|의약외품|의약|마약|향정|신약|약국|약사|약물|백신|치료제|바이오의약|임상시험|의료제품|제약|"
                      r"첨단재생|희귀의약|항암제|주사제|처방|조제|복약|오남용|리베이트")
-FOOD_RE = re.compile(r"식품|식중독|급식|농산물|수산물|축산물|식육|먹거리|김장|HACCP|이물|영양|나트륨|당류|저염|저당|단짠|김치|건강기능")
-KEEP_RE = re.compile(r"의약|의료|제약|약국|약사|백신|치료|임상|진단|마약|화장품|바이오|허가|심사")
+FOOD_RE = re.compile(r"식품|식중독|급식|농산물|수산물|축산물|식육|먹거리|김장|HACCP|이물|영양|나트륨|당류|저염|저당|단짠|김치|건강기능|화장품|뷰티|미용|메이크업|염모|기능성화장")
+MED_RE = re.compile(r"의약|의료|제약|약국|약사|약물|백신|치료|임상|진단|마약|향정|신약|바이오|병원|환자|보험|처방|조제|복약|오남용|리베이트|항암|주사제|감염|질환|기기|장치|키트")
 TOPICS = {
-    "식품 제외": dict(exclude=FOOD_RE, keep=KEEP_RE, empty="식품 관련 제외"),
+    "의료·제약": dict(re=MED_RE, dept=re.compile("의약|의료|마약|약무|바이오|임상|진단|제약|약"),
+                    body=re.compile("의약품|의료기기|임상|진단|의료|제약"), body_n=3,
+                    exclude=FOOD_RE, empty="의료·제약·진단기기 분야 외 제외"),
     "보험": dict(re=INS_RE, dept=re.compile("보험"), body=re.compile("보험"), body_n=3),
     "의약품": dict(re=DRUG_RE, dept=re.compile("의약품|마약|약무|의료제품|바이오|임상|약"), body=re.compile("의약품|마약|약국|약사"), body_n=3),
 }
@@ -435,15 +437,16 @@ def select_window(items, now):
 def apply_insurance_filter(inst, st, win, session, check_only=False):
     """금융위·금감원: 보험 분야만. 제목/담당부서 → 애매한 건은 본문 확인. 식약처: 식품 관련만 제외."""
     tp = TOPICS[inst["topic"]]
-    if tp.get("exclude"):
-        kept, dropped = [], []
+    pre_dropped = []
+    if tp.get("exclude"):          # 식품·화장품 등 제외 (의약 관련 단어가 함께 있으면 유지)
+        rest = []
         for it in win:
             text = it["title"] + " " + (it.get("dept") or "")
-            if tp["exclude"].search(text) and not tp["keep"].search(text):
-                dropped.append(it)
+            if tp["exclude"].search(text) and not tp["re"].search(text):
+                pre_dropped.append(it)
             else:
-                kept.append(it)
-        return kept, dropped
+                rest.append(it)
+        win = rest
     kept, undecided, dropped = [], [], []
     for it in win:
         (kept if is_insurance_quick(it, inst["topic"]) else undecided).append(it)
@@ -464,7 +467,7 @@ def apply_insurance_filter(inst, st, win, session, check_only=False):
     else:
         dropped = undecided
     kept.sort(key=lambda x: (-x["date"].toordinal(), win.index(x)))
-    return kept, dropped
+    return kept, dropped + pre_dropped
 
 
 def fill_summaries(items, sessions):
@@ -569,7 +572,7 @@ def build_email_html(results, now) -> str:
             "<th style='padding:4px;border:1px solid #dde2e8;font-size:13px;color:#333;'>보도자료</th></tr>"
             + "".join(rows) + "</table></td></tr>")
     foot = ("이 메일은 자동으로 발송되었습니다. 게시일 기준 최근 "
-            f"{WINDOW_HOURS}시간 이내 보도자료이며, 금융위원회·금융감독원은 보험 분야만, 식품의약품안전처는 식품 관련을 제외하고 표시합니다. "
+            f"{WINDOW_HOURS}시간 이내 보도자료이며, 금융위원회·금융감독원은 보험 분야만, 식품의약품안전처는 의료·제약·진단기기 분야만(식품·화장품 제외) 표시합니다. "
             "요약문은 보도자료 본문 앞부분을 바탕으로 만들어져 원문과 다를 수 있으니 중요한 내용은 원문을 확인하세요.")
     if failed:
         foot += f" <b style='color:#92400e;'>수집 실패 기관: {esc(', '.join(failed))}</b>"
