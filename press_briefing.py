@@ -143,7 +143,7 @@ def make_session():
     return s
 
 
-def http_get(session, url, retries=4, timeout=(20, 40)):
+def http_get(session, url, retries=2, timeout=(12, 30)):
     """(응답, 오류문구). 일시 오류는 2회까지 재시도. 차단·인증서 오류는 그대로 보고(우회하지 않음)."""
     last = ""
     for i in range(retries + 1):
@@ -624,7 +624,8 @@ def build_email_html(results, now) -> str:
         if not st["ok"]:
             out.append(
                 "<tr><td style='padding:0 24px 6px;'><div style='font-size:12.5px;color:#92400e;background:#fffbeb;"
-                f"border:1px solid #fde68a;padding:6px 10px;line-height:1.4;'>⚠ 수집 실패 — {esc(st['error'])}</div></td></tr>")
+                f"border:1px solid #fde68a;padding:6px 10px;line-height:1.4;'>⚠ 수집 실패 — {esc(st['error'][:160])} "
+                f"<a href='{esc(inst['url'], quote=True)}' style='color:#1a56db;'>[사이트에서 직접 확인]</a></div></td></tr>")
             continue
         if not items:
             out.append(
