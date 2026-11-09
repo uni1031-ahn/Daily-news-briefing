@@ -2,16 +2,16 @@
  "week": "2026-W46",
  "start": "2026-11-02",
  "end": "2026-11-09",
- "headline": "이번 주에는 삼성바이오에피스의 키트루다 바이오시밀러 임상3상 결과 발표와 J&J 리브레반트 파스프로의 두경부암 FDA 승인 소식이 주요 화제였습니다. 그 밖에 국산 CAR-T, ADC, 표적항암제 등 다양한 국내외 항암 개발 소식이 이어졌습니다.",
+ "headline": "이번 주 항암 소식은 J&J 리브레반트 파스프로의 두경부암 FDA 승인과 삼성바이오에피스 키트루다 바이오시밀러 임상3상 동등성 발표가 중심이며, CAR-T 판매 계약, 국산 CAR-T 적응증 확대 신청, 다수 표적·ADC 임상 소식이 이어졌습니다.",
  "demo": false,
  "trend": {
-  "CAR-T": 49,
-  "ADC": 14,
-  "bispecific": 13,
+  "CAR-T": 51,
+  "ADC": 13,
+  "bispecific": 12,
   "radioligand": 6,
   "KRAS": 2,
   "PD-1": 9,
-  "HER2": 12,
+  "HER2": 13,
   "TROP2": 1,
   "in vivo CAR-T": 2,
   "GLP-1": 1,
@@ -22,156 +22,27 @@
  },
  "top": [
   {
-   "id": 15,
-   "title": "삼성바이오에피스, 미국 면역항암학회서 '키트루다' 바이오시밀러 임상3상 결과 발표 - 비즈니스포스트",
-   "link": "https://news.google.com/rss/articles/CBMic0FVX3lxTFB0V3FlcFFUcnJhVmZkZ29QblJTSmExQnRqek8wR0N0VV9leGlLejAxYmtxcGNGYk9ZN3ppUUdXaVBwbUE5cldRbzRzek5Oc1J4eUg0aUFVYlBTbHJSNVlrLUJ3QmpSZWxoX1drZTlrSC1ucGM?oc=5",
-   "when": "2026-11-09T10:55:10+09:00",
-   "source": "비즈니스포스트",
+   "id": 5,
+   "title": "앱클론, 종근당과 CAR-T 치료제 네스페셀 국내 독점 판매 계약 - 뉴스1",
+   "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE9qTkNUSmJPR0dCU3d6VWFuaUhERUNORjctQi0xS2tYbW9xTlVyNDNJcFRlTUtEU0lBNXZyQjVndUpKM3Q0bzJmSm1sc0ZJaEVKa3J0SVo2UFJFaUNxZkdfOQ?oc=5",
+   "when": "2026-11-09T14:51:31+09:00",
+   "source": "뉴스1",
    "sources": [
-    "뉴스웍스",
-    "데일리메디팜",
-    "비즈니스포스트"
-   ],
-   "snippet": "삼성바이오에피스, 미국 면역항암학회서 '키트루다' 바이오시밀러 임상3상 결과 발표    비즈니스포스트",
-   "cat": "io",
-   "breast": false,
-   "score": 9.91,
-   "lang": "ko",
-   "members": [
-    {
-     "title": "삼성바이오에피스, 미국 면역항암학회서 '키트루다' 바이오시밀러 임상3상 결과 발표 - 비즈니스포스트",
-     "link": "https://news.google.com/rss/articles/CBMic0FVX3lxTFB0V3FlcFFUcnJhVmZkZ29QblJTSmExQnRqek8wR0N0VV9leGlLejAxYmtxcGNGYk9ZN3ppUUdXaVBwbUE5cldRbzRzek5Oc1J4eUg0aUFVYlBTbHJSNVlrLUJ3QmpSZWxoX1drZTlrSC1ucGM?oc=5",
-     "source": "비즈니스포스트"
-    },
-    {
-     "title": "삼성바이오에피스, 미국 면역항암학회서 '키트루다' 바이오시밀러 임상3상 결과 발표 - 비즈니스포스트",
-     "link": "https://news.google.com/rss/articles/CBMic0FVX3lxTFB0V3FlcFFUcnJhVmZkZ29QblJTSmExQnRqek8wR0N0VV9leGlLejAxYmtxcGNGYk9ZN3ppUUdXaVBwbUE5cldRbzRzek5Oc1J4eUg0aUFVYlBTbHJSNVlrLUJ3QmpSZWxoX1drZTlrSC1ucGM?oc=5",
-     "source": "비즈니스포스트"
-    },
-    {
-     "title": "삼성바이오에피스, 美 면역항암학회서 키트루다 바이오시밀러 3상 결과 발표 - 데일리메디팜",
-     "link": "https://news.google.com/rss/articles/CBMicEFVX3lxTE5lNmcxRlJ4aGg1d1lSTGF2SG5iNGFzSUF1dTV1WnBFbkFSSkdUVGpQeU9WdlNEelNUTWFBWEJsNUk1RHlOWWZ5MnAyMTVOM3p5bUlBaGxKWmNtNkZvTFllYUR0Y3N2Vjk5YVA5X05PRkc?oc=5",
-     "source": "데일리메디팜"
-    },
-    {
-     "title": "삼성바이오에피스, 美 면역항암학회서 키트루다 바이오시밀러 임상 3상 결과 발표 - 뉴스웍스",
-     "link": "https://news.google.com/rss/articles/CBMib0FVX3lxTE55eFMyd1RiZXUyTXJzTl9vQ0dISGdhT2pvQTBtSlEwbjdDVjVfNUhiLXFRZ3ZrUFBEbnMzY3lMWGE5aTlBNkdYWm9Uai1fZlE0anpybXFtZy1LVEs2Wm1pLW5UZlNMVUp1ZzBIeVFBc9IBc0FVX3lxTE03YzNGaHRObUJBdFU0dTJyM01tcnQxVWQ0WGN3dERFdjdHTk41YjA5RnQ5R1puMUxaV3Nxa0FUMmp0WlpxbTRja24xSWh1UzJkTFVkVnc3cHphbUkxZWRLVzM3QlhXWHg5YUdEeUdHM1pFVTg?oc=5",
-     "source": "뉴스웍스"
-    },
-    {
-     "title": "삼성바이오에피스, 美 면역항암학회서 키트루다 바이오시밀러 임상 3상 결과 발표 - 뉴스웍스",
-     "link": "https://news.google.com/rss/articles/CBMic0FVX3lxTE03YzNGaHRObUJBdFU0dTJyM01tcnQxVWQ0WGN3dERFdjdHTk41YjA5RnQ5R1puMUxaV3Nxa0FUMmp0WlpxbTRja24xSWh1UzJkTFVkVnc3cHphbUkxZWRLVzM3QlhXWHg5YUdEeUdHM1pFVTjSAXNBVV95cUxNN2MzRmh0Tm1CQXRVNHUycjNNbXJ0MVVkNFhjd3RERXY3R05ONWIwOUZ0OUdabjFMWldzcWtBVDJqdFpacW00Y2tuMUlodVMyZExVZFZ3N3B6YW1JMWVkS1czN0JYV1h4OWFHRHlHRzNaRVU4?oc=5",
-     "source": "뉴스웍스"
-    }
-   ],
-   "title_ko": "삼성바이오에피스, 미국 면역항암학회에서 키트루다 바이오시밀러 임상3상 결과 발표",
-   "summary": "삼성바이오에피스가 미국 면역항암학회에서 '키트루다' 바이오시밀러의 임상3상 결과를 발표했습니다."
-  },
-  {
-   "id": 72,
-   "title": "Joanna Sadowska: FDA Approves J&J’s Dual-Targeted Therapy for Head and Neck Cancer - Oncodaily",
-   "link": "https://news.google.com/rss/articles/CBMiaEFVX3lxTFB3TmR1S2RMa1Bzd3VsU25JX3RUamhNVWU4N05uMTdwa2taNFRWOElvZGdoTjZIRGd4YXdlTmtoSFFoZ0pDenJYQWV1Nnd6X1VTWGw0SGF2bEhkZDdNMTFtNzRoYm4wZndi?oc=5",
-   "when": "2026-11-07T22:31:13+09:00",
-   "source": "Oncodaily",
-   "sources": [
-    "MedPage Today",
-    "Oncodaily"
-   ],
-   "snippet": "Joanna Sadowska: FDA Approves J&J’s Dual-Targeted Therapy for Head and Neck Cancer    Oncodaily",
-   "cat": "reg",
-   "breast": false,
-   "score": 7.41,
-   "lang": "en",
-   "members": [
-    {
-     "title": "Joanna Sadowska: FDA Approves J&J’s Dual-Targeted Therapy for Head and Neck Cancer - Oncodaily",
-     "link": "https://news.google.com/rss/articles/CBMiaEFVX3lxTFB3TmR1S2RMa1Bzd3VsU25JX3RUamhNVWU4N05uMTdwa2taNFRWOElvZGdoTjZIRGd4YXdlTmtoSFFoZ0pDenJYQWV1Nnd6X1VTWGw0SGF2bEhkZDdNMTFtNzRoYm4wZndi?oc=5",
-     "source": "Oncodaily"
-    },
-    {
-     "title": "FDA Approves Dual-Targeted Therapy for Head and Neck Cancer - MedPage Today",
-     "link": "https://news.google.com/rss/articles/CBMidkFVX3lxTE1wYUdBQlhPQVpOTzY5QWR6Ym5qenQ0cXpKbllzNmwzbjN5WEQ0akpQdDA2OXVQYXBPS1pJUVRRMXdIZkZaZ3dSREY3SElTc0tuLWd2N3VtQTctby1RandNVmgyVFdSeU94U1BNZXZuczJRY1ljVWc?oc=5",
-     "source": "MedPage Today"
-    }
-   ],
-   "title_ko": "FDA, J&J의 이중표적 치료제 두경부암 승인",
-   "summary": "FDA가 J&J의 이중표적 치료제를 두경부암 치료제로 승인했다고 보도됐습니다."
-  },
-  {
-   "id": 350,
-   "title": "국산 CAR-T ‘림카토’, 2차 치료로 확대 추진…큐로셀, 3상 변경승인 신청 - 쿠키뉴스",
-   "link": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE9seU9vTWUyQmpwWUJ6OFZ5dHdVNGNQUHFNN2dsTXpqc28tRGl3d2ViNUg2NnRBSTVRZUVKc2pzdVhxandOXzd1MDQyVzk0WGRFdHFjSFNxVTJGeGlhdm1MNUJIaw?oc=5",
-   "when": "2026-11-02T04:50:13+09:00",
-   "source": "쿠키뉴스",
-   "sources": [
-    "쿠키뉴스"
-   ],
-   "snippet": "국산 CAR-T ‘림카토’, 2차 치료로 확대 추진…큐로셀, 3상 변경승인 신청    쿠키뉴스",
-   "cat": "reg",
-   "breast": false,
-   "score": 6,
-   "lang": "ko",
-   "members": [
-    {
-     "title": "국산 CAR-T ‘림카토’, 2차 치료로 확대 추진…큐로셀, 3상 변경승인 신청 - 쿠키뉴스",
-     "link": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE9seU9vTWUyQmpwWUJ6OFZ5dHdVNGNQUHFNN2dsTXpqc28tRGl3d2ViNUg2NnRBSTVRZUVKc2pzdVhxandOXzd1MDQyVzk0WGRFdHFjSFNxVTJGeGlhdm1MNUJIaw?oc=5",
-     "source": "쿠키뉴스"
-    }
-   ],
-   "title_ko": "국산 CAR-T '림카토', 2차 치료로 적응증 확대 추진…큐로셀 3상 변경승인 신청",
-   "summary": "큐로셀이 국산 CAR-T '림카토'의 2차 치료 확대를 위해 3상 변경승인을 신청했습니다."
-  },
-  {
-   "id": 2,
-   "title": "케이메디허브, 간세포암 표적항암제 'ETN101' 미국 임상 진입 지원 - 의학신문",
-   "link": "https://news.google.com/rss/articles/CBMiakFVX3lxTE5yb0lBT2Vpc01najdLRkhxTlIxQ25VQnhIX19oemRsRDV1bGNmODVOVmJpbkxfMkJLaGVpVzFfRGpXZnZKM2JsZ2MycThwRTNDa0RwX09qbllGb1VPdlFYSkNaRjdNUGZwWnc?oc=5",
-   "when": "2026-11-09T14:47:48+09:00",
-   "source": "의학신문",
-   "sources": [
-    "매일일보",
-    "의학신문"
-   ],
-   "snippet": "케이메디허브, 간세포암 표적항암제 'ETN101' 미국 임상 진입 지원    의학신문",
-   "cat": "targeted",
-   "breast": false,
-   "score": 5.97,
-   "lang": "ko",
-   "members": [
-    {
-     "title": "케이메디허브, 간세포암 표적항암제 'ETN101' 미국 임상 진입 지원 - 의학신문",
-     "link": "https://news.google.com/rss/articles/CBMiakFVX3lxTE5yb0lBT2Vpc01najdLRkhxTlIxQ25VQnhIX19oemRsRDV1bGNmODVOVmJpbkxfMkJLaGVpVzFfRGpXZnZKM2JsZ2MycThwRTNDa0RwX09qbllGb1VPdlFYSkNaRjdNUGZwWnc?oc=5",
-     "source": "의학신문"
-    },
-    {
-     "title": "케이메디허브, 간세포암 표적항암제 'ETN101' 미국 임상 개발 지원 - 매일일보",
-     "link": "https://news.google.com/rss/articles/CBMiZEFVX3lxTFBxMTVjMV9jUU4yYVRlVU9UOGw3eE02NnAtOGs2U1NuRm92QjZoUGVlR3VDNWJTdmV6RlE0T1pSSkVZU2M0dEtjd0ZwSVdqc1Z6QlFQc2V4Ymw4ZDJQUVlqeHFzMVQ?oc=5",
-     "source": "매일일보"
-    },
-    {
-     "title": "케이메디허브, 간세포암 표적항암제 'ETN101' 미국 임상 개발 지원 - 매일일보",
-     "link": "https://news.google.com/rss/articles/CBMiZEFVX3lxTFBxMTVjMV9jUU4yYVRlVU9UOGw3eE02NnAtOGs2U1NuRm92QjZoUGVlR3VDNWJTdmV6RlE0T1pSSkVZU2M0dEtjd0ZwSVdqc1Z6QlFQc2V4Ymw4ZDJQUVlqeHFzMVQ?oc=5",
-     "source": "매일일보"
-    }
-   ],
-   "title_ko": "케이메디허브, 간세포암 표적항암제 ETN101 미국 임상 진입 지원",
-   "summary": "케이메디허브가 간세포암 표적항암제 ETN101의 미국 임상 진입을 지원한다는 소식입니다."
-  },
-  {
-   "id": 6,
-   "title": "앱클론·종근당, CAR-T 치료제 '네스페셀' 국내 독점 판매 계약 - 서울경제TV",
-   "link": "https://news.google.com/rss/articles/CBMiZEFVX3lxTE0xYmtOUnA0MmxlTU9ZLTFqNE4wU2pPaFE0QVR1VXE4RWlPNHhkUVBNd2Zsbl83YTFwLTNmUXAzQlFqUFZfZTRHSEhLZnhZNlpkMzJlS214S0VkQVJFTkZQc1hzQjE?oc=5",
-   "when": "2026-11-09T14:13:58+09:00",
-   "source": "서울경제TV",
-   "sources": [
+    "뉴스1",
     "메디컬투데이",
     "서울경제TV"
    ],
-   "snippet": "앱클론·종근당, CAR-T 치료제 '네스페셀' 국내 독점 판매 계약    서울경제TV",
-   "cat": "cart",
+   "snippet": "앱클론, 종근당과 CAR-T 치료제 네스페셀 국내 독점 판매 계약    뉴스1",
+   "cat": "biz",
    "breast": false,
-   "score": 5.96,
+   "score": 7.97,
    "lang": "ko",
    "members": [
+    {
+     "title": "앱클론, 종근당과 CAR-T 치료제 네스페셀 국내 독점 판매 계약 - 뉴스1",
+     "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE9qTkNUSmJPR0dCU3d6VWFuaUhERUNORjctQi0xS2tYbW9xTlVyNDNJcFRlTUtEU0lBNXZyQjVndUpKM3Q0bzJmSm1sc0ZJaEVKa3J0SVo2UFJFaUNxZkdfOQ?oc=5",
+     "source": "뉴스1"
+    },
     {
      "title": "앱클론·종근당, CAR-T 치료제 '네스페셀' 국내 독점 판매 계약 - 서울경제TV",
      "link": "https://news.google.com/rss/articles/CBMiZEFVX3lxTE0xYmtOUnA0MmxlTU9ZLTFqNE4wU2pPaFE0QVR1VXE4RWlPNHhkUVBNd2Zsbl83YTFwLTNmUXAzQlFqUFZfZTRHSEhLZnhZNlpkMzJlS214S0VkQVJFTkZQc1hzQjE?oc=5",
@@ -183,11 +54,95 @@
      "source": "메디컬투데이"
     }
    ],
-   "title_ko": "앱클론·종근당, CAR-T 치료제 '네스페셀' 국내 독점 판매 계약",
-   "summary": "앱클론과 종근당이 CAR-T 치료제 '네스페셀'의 국내 독점 판매 계약을 체결했습니다."
+   "title_ko": "앱클론, 종근당과 CAR-T 치료제 네스페셀 국내 독점 판매 계약",
+   "summary": "앱클론이 CAR-T 치료제 네스페셀의 국내 독점 판매를 위해 종근당과 계약을 맺었습니다."
   },
   {
-   "id": 23,
+   "id": 150,
+   "title": "J&J Announces US FDA Approval Of Rybrevant Faspro As First And Only Dual-Targeted Therapy For Advanced Head And Neck Cancer - TradingView",
+   "link": "https://news.google.com/rss/articles/CBMingJBVV95cUxQMXJNT3NlMmtPQURWTW9qRmJTMVEzbTVid2xYMWFGN3h4WWZvOEpIcTV6a0p1MzlBY0NobEdMM0c3VTgydzFPLVZLb2JrNHR3cTVKSTVYa1FaTXVqdEl0MlR0cHl2ZUI1Rm1MbkV0SWIyZzJmYXRYU0tDTklRSFlCbGlGcElrWHRSVDVpeVNvYmsySmd5ZW1VMDl6bktqZ3k0WEVwT1c3cFg4S2VsYjJMTkZJLVVTdmxYd3FrSVM0ejQ2VHVCRm5hdUFHd0NCeDJvbXY4OEdrMVIyeUdCRWhfbExfQUxLM1IzSjNsVG9Udk9yb3RYVVFmeFVTbm5wa3hTUHRwc2pUTnlXdlBlSElGZFRVSVhoN2FMNnRHbHZR?oc=5",
+   "when": "2026-11-06T11:06:00+09:00",
+   "source": "TradingView",
+   "sources": [
+    "TradingView",
+    "WBOC TV"
+   ],
+   "snippet": "J&J Announces US FDA Approval Of Rybrevant Faspro As First And Only Dual-Targeted Therapy For Advanced Head And Neck Cancer    TradingView",
+   "cat": "reg",
+   "breast": false,
+   "score": 6.91,
+   "lang": "en",
+   "members": [
+    {
+     "title": "J&J Announces US FDA Approval Of Rybrevant Faspro As First And Only Dual-Targeted Therapy For Advanced Head And Neck Cancer - TradingView",
+     "link": "https://news.google.com/rss/articles/CBMingJBVV95cUxQMXJNT3NlMmtPQURWTW9qRmJTMVEzbTVid2xYMWFGN3h4WWZvOEpIcTV6a0p1MzlBY0NobEdMM0c3VTgydzFPLVZLb2JrNHR3cTVKSTVYa1FaTXVqdEl0MlR0cHl2ZUI1Rm1MbkV0SWIyZzJmYXRYU0tDTklRSFlCbGlGcElrWHRSVDVpeVNvYmsySmd5ZW1VMDl6bktqZ3k0WEVwT1c3cFg4S2VsYjJMTkZJLVVTdmxYd3FrSVM0ejQ2VHVCRm5hdUFHd0NCeDJvbXY4OEdrMVIyeUdCRWhfbExfQUxLM1IzSjNsVG9Udk9yb3RYVVFmeFVTbm5wa3hTUHRwc2pUTnlXdlBlSElGZFRVSVhoN2FMNnRHbHZR?oc=5",
+     "source": "TradingView"
+    },
+    {
+     "title": "Johnson & Johnson announces U.S. FDA Approval of RYBREVANT FASPRO™ (amivantamab and hyaluronidase-lpuj) as First and Only Dual-Targeted Therapy for Advanced Head and Neck Cancer - WBOC TV",
+     "link": "https://news.google.com/rss/articles/CBMiqgJBVV95cUxOTnJnRl8zRzR3TkJVa1VIY0d5MXRLOWhsU3VUeVdwX1VydXR6NlB1c2didWdoSjIyZWJEVEpOckJuTHFSd0NKRnkxZDJUb19iVkZpN1BocVZMck5MQ285a3QwbGROUDU1X3dqcmN1clZVal9Sc3VZa2xCdlh3b0VoMWhTQ1VybFdFYzZJQ21Oa0RNRC01MjAwWWV4T3huWnNBQUNONl9tUDJVNjE3M2YyNHRxTDZQcmFmYzAxT2JrNmlJWGd6aEtBNEdZYmNmYXpEbVUzS0NzTGk1WkdfaDV2aTBZaFFPWG5xWm1mRTltTF9IaU1kTXRvUjVoUFFDdlUzamZxa29SVWVuV3dvY0hTUmhYV29Ma2FMVlVBZHJ5Ujl3NjVadncwdjhn?oc=5",
+     "source": "WBOC TV"
+    }
+   ],
+   "title_ko": "J&J, 리브레반트 파스프로 진행성 두경부암 최초 이중표적 치료제로 FDA 승인",
+   "summary": "J&J가 리브레반트 파스프로를 진행성 두경부암의 최초이자 유일한 이중표적 치료제로 FDA 승인받았다고 발표했습니다."
+  },
+  {
+   "id": 352,
+   "title": "국산 CAR-T ‘림카토’, 2차 치료로 확대 추진…큐로셀, 3상 변경승인 신청 - 쿠키뉴스",
+   "link": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE9seU9vTWUyQmpwWUJ6OFZ5dHdVNGNQUHFNN2dsTXpqc28tRGl3d2ViNUg2NnRBSTVRZUVKc2pzdVhxandOXzd1MDQyVzk0WGRFdHFjSFNxVTJGeGlhdm1MNUJIaw?oc=5",
+   "when": "2026-11-02T04:50:13+09:00",
+   "source": "쿠키뉴스",
+   "sources": [
+    "쿠키뉴스"
+   ],
+   "snippet": "국산 CAR-T ‘림카토’, 2차 치료로 확대 추진…큐로셀, 3상 변경승인 신청    쿠키뉴스",
+   "cat": "cart",
+   "breast": false,
+   "score": 6,
+   "lang": "ko",
+   "members": [
+    {
+     "title": "국산 CAR-T ‘림카토’, 2차 치료로 확대 추진…큐로셀, 3상 변경승인 신청 - 쿠키뉴스",
+     "link": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE9seU9vTWUyQmpwWUJ6OFZ5dHdVNGNQUHFNN2dsTXpqc28tRGl3d2ViNUg2NnRBSTVRZUVKc2pzdVhxandOXzd1MDQyVzk0WGRFdHFjSFNxVTJGeGlhdm1MNUJIaw?oc=5",
+     "source": "쿠키뉴스"
+    }
+   ],
+   "title_ko": "국산 CAR-T '림카토', 2차 치료로 적응증 확대 추진…큐로셀, 3상 변경승인 신청",
+   "summary": "큐로셀이 국산 CAR-T '림카토'의 2차 치료 확대를 위해 3상 변경승인을 신청했습니다."
+  },
+  {
+   "id": 6,
+   "title": "케이메디허브, 간세포암 표적항암제 'ETN101' 미국 임상 진입 지원 - 의학신문",
+   "link": "https://news.google.com/rss/articles/CBMiakFVX3lxTE5yb0lBT2Vpc01najdLRkhxTlIxQ25VQnhIX19oemRsRDV1bGNmODVOVmJpbkxfMkJLaGVpVzFfRGpXZnZKM2JsZ2MycThwRTNDa0RwX09qbllGb1VPdlFYSkNaRjdNUGZwWnc?oc=5",
+   "when": "2026-11-09T14:47:48+09:00",
+   "source": "의학신문",
+   "sources": [
+    "매일일보",
+    "의학신문"
+   ],
+   "snippet": "케이메디허브, 간세포암 표적항암제 'ETN101' 미국 임상 진입 지원    의학신문",
+   "cat": "targeted",
+   "breast": false,
+   "score": 5.96,
+   "lang": "ko",
+   "members": [
+    {
+     "title": "케이메디허브, 간세포암 표적항암제 'ETN101' 미국 임상 진입 지원 - 의학신문",
+     "link": "https://news.google.com/rss/articles/CBMiakFVX3lxTE5yb0lBT2Vpc01najdLRkhxTlIxQ25VQnhIX19oemRsRDV1bGNmODVOVmJpbkxfMkJLaGVpVzFfRGpXZnZKM2JsZ2MycThwRTNDa0RwX09qbllGb1VPdlFYSkNaRjdNUGZwWnc?oc=5",
+     "source": "의학신문"
+    },
+    {
+     "title": "케이메디허브, 간세포암 표적항암제 'ETN101' 미국 임상 개발 지원 - 매일일보",
+     "link": "https://news.google.com/rss/articles/CBMiZEFVX3lxTFBxMTVjMV9jUU4yYVRlVU9UOGw3eE02NnAtOGs2U1NuRm92QjZoUGVlR3VDNWJTdmV6RlE0T1pSSkVZU2M0dEtjd0ZwSVdqc1Z6QlFQc2V4Ymw4ZDJQUVlqeHFzMVQ?oc=5",
+     "source": "매일일보"
+    }
+   ],
+   "title_ko": "케이메디허브, 간세포암 표적항암제 'ETN101' 미국 임상 진입 지원",
+   "summary": "케이메디허브가 간세포암 표적항암제 ETN101의 미국 임상 진입을 지원합니다."
+  },
+  {
+   "id": 27,
    "title": "제일약품, 바이오유럽서 당뇨·항암 신약 기술수출 추진 - 바이오타임즈",
    "link": "https://news.google.com/rss/articles/CBMibEFVX3lxTFBkRElETjVQbFcwY3NhNjNLbkVXWUxIYTUxX2dWZE0tZ0NPR0NBYVVTbkdITUx6bk45QnNYMWZqM3g3MEhFbElCUENiaDB6ckxFOHJudzhTdHhrLUpyNXRZeEpEZFdSOFRIWXNXQQ?oc=5",
    "when": "2026-11-09T09:49:24+09:00",
@@ -197,7 +152,7 @@
     "바이오타임즈"
    ],
    "snippet": "제일약품, 바이오유럽서 당뇨·항암 신약 기술수출 추진    바이오타임즈",
-   "cat": "other",
+   "cat": "biz",
    "breast": false,
    "score": 5.9,
    "lang": "ko",
@@ -214,58 +169,10 @@
     }
    ],
    "title_ko": "제일약품, 바이오유럽서 당뇨·항암 신약 기술수출 추진",
-   "summary": "제일약품이 바이오유럽에서 당뇨 및 항암 신약의 기술수출을 추진한다는 소식입니다."
+   "summary": "제일약품이 바이오유럽에서 당뇨 및 항암 신약의 기술수출을 추진합니다."
   },
   {
-   "id": 54,
-   "title": "FDA approves breakthrough drug to treat advanced pancreatic cancer - ABC News - Breaking News, Latest News and Videos",
-   "link": "https://news.google.com/rss/articles/CBMirgFBVV95cUxQXzVOaEFzN0VYZFQ1VGFmaFZsVUNRTmg5TGhOTk1MVDBSVENmejFfQmJta29jaDJ4Qk5NWTkxc2QzRUhpRDJleU9BZTkxYUV4YzZDRnNIY2tkeHJMcTF5S0ZKV3lGVFAwTXlGYkE4QXRna1VOQ2RmVXE4eTl6TjdRS09XUFlqaFBOQmN2aDN0d3E1Y1pvZDlfcmJSVlF0dVZwbFpUamhBLWIyUTVJVFHSAbMBQVVfeXFMUFFHQm1SOGhLWmFEZ29HVmNYSnEzcnAwZjdvMXhwT2pWbkhTMzY4ZkUxT1IwYlFVZy1oSXl6a0E0V3I1czJKdko2SHJaWUZSNU5OaDU5b1BfNkVRNjJ4aHFzN3NRYnNPZndPQmhoVXpOZEhmY0JvbmVKSWNaRnkxdlVNWHdoazhGY2lMSnpXZnZ4YTJ0Z19RNDdSQ0VsM3hoUm1YWjJuN0ZMdlphSkZNWWNGUmM?oc=5",
-   "when": "2026-11-08T12:19:03+09:00",
-   "source": "ABC News - Breaking News, Latest News and Videos",
-   "sources": [
-    "ABC News - Breaking News, Latest News and Videos"
-   ],
-   "snippet": "FDA approves breakthrough drug to treat advanced pancreatic cancer    ABC News - Breaking News, Latest News and Videos",
-   "cat": "reg",
-   "breast": false,
-   "score": 5.6,
-   "lang": "en",
-   "members": [
-    {
-     "title": "FDA approves breakthrough drug to treat advanced pancreatic cancer - ABC News - Breaking News, Latest News and Videos",
-     "link": "https://news.google.com/rss/articles/CBMirgFBVV95cUxQXzVOaEFzN0VYZFQ1VGFmaFZsVUNRTmg5TGhOTk1MVDBSVENmejFfQmJta29jaDJ4Qk5NWTkxc2QzRUhpRDJleU9BZTkxYUV4YzZDRnNIY2tkeHJMcTF5S0ZKV3lGVFAwTXlGYkE4QXRna1VOQ2RmVXE4eTl6TjdRS09XUFlqaFBOQmN2aDN0d3E1Y1pvZDlfcmJSVlF0dVZwbFpUamhBLWIyUTVJVFHSAbMBQVVfeXFMUFFHQm1SOGhLWmFEZ29HVmNYSnEzcnAwZjdvMXhwT2pWbkhTMzY4ZkUxT1IwYlFVZy1oSXl6a0E0V3I1czJKdko2SHJaWUZSNU5OaDU5b1BfNkVRNjJ4aHFzN3NRYnNPZndPQmhoVXpOZEhmY0JvbmVKSWNaRnkxdlVNWHdoazhGY2lMSnpXZnZ4YTJ0Z19RNDdSQ0VsM3hoUm1YWjJuN0ZMdlphSkZNWWNGUmM?oc=5",
-     "source": "ABC News - Breaking News, Latest News and Videos"
-    }
-   ],
-   "title_ko": "FDA, 진행성 췌장암 획기적 신약 승인",
-   "summary": "FDA가 진행성 췌장암 치료를 위한 획기적 신약을 승인했다고 보도됐습니다."
-  },
-  {
-   "id": 94,
-   "title": "The BioPharm Brief: A Bispecific Approval in Head and Neck Cancer, TCR Bispecifics Head to the Clinic, and a New Antibody Target in Essential Thrombocythemia - BioPharm International",
-   "link": "https://news.google.com/rss/articles/CBMiowJBVV95cUxQSjVnNkZZRFJURTJxUGxodzVCekJMSFNGUTFpQkZDWXRuNFQtcHJ1dVZScTcwb1ZjMjdSY0xFLWk5MXBEQWdGcFJIREhUcmZBOXRjV1ZWc19zdk5TdHNVVFR0dDNmc1NQVl8yQ2VGX1NObDhKVEpQZXFlY29FZVZzY1h4UjA5SUllb0hRZzBoWkhYZ0dNRTBCcW1IUk5oRTRjSHFMOXhkZGJrdXBjVldKZ3VtSGFiSXBHMExmNHNTeG9TSVpPb1FuVy1GZHNxZHhydExHOFQwS3FWTm03akhOc2hPenRlb3paeklGT3NVZ05pVWtKak5ya1pWQkVJM1hPdVdGRkdwLXppcHBBSDgyMVlNckV0OGJNWDVwWHFIeU13LUk?oc=5",
-   "when": "2026-11-07T06:59:37+09:00",
-   "source": "BioPharm International",
-   "sources": [
-    "BioPharm International"
-   ],
-   "snippet": "The BioPharm Brief: A Bispecific Approval in Head and Neck Cancer, TCR Bispecifics Head to the Clinic, and a New Antibody Target in Essential Thrombocythemia    BioPharm International",
-   "cat": "reg",
-   "breast": false,
-   "score": 5.19,
-   "lang": "en",
-   "members": [
-    {
-     "title": "The BioPharm Brief: A Bispecific Approval in Head and Neck Cancer, TCR Bispecifics Head to the Clinic, and a New Antibody Target in Essential Thrombocythemia - BioPharm International",
-     "link": "https://news.google.com/rss/articles/CBMiowJBVV95cUxQSjVnNkZZRFJURTJxUGxodzVCekJMSFNGUTFpQkZDWXRuNFQtcHJ1dVZScTcwb1ZjMjdSY0xFLWk5MXBEQWdGcFJIREhUcmZBOXRjV1ZWc19zdk5TdHNVVFR0dDNmc1NQVl8yQ2VGX1NObDhKVEpQZXFlY29FZVZzY1h4UjA5SUllb0hRZzBoWkhYZ0dNRTBCcW1IUk5oRTRjSHFMOXhkZGJrdXBjVldKZ3VtSGFiSXBHMExmNHNTeG9TSVpPb1FuVy1GZHNxZHhydExHOFQwS3FWTm03akhOc2hPenRlb3paeklGT3NVZ05pVWtKak5ya1pWQkVJM1hPdVdGRkdwLXppcHBBSDgyMVlNckV0OGJNWDVwWHFIeU13LUk?oc=5",
-     "source": "BioPharm International"
-    }
-   ],
-   "title_ko": "바이오제약 브리프: 두경부암 이중특이항체 승인, TCR 이중특이항체 임상 진입, 본태성 혈소판증가증 신규 항체 표적",
-   "summary": "두경부암 이중특이항체 승인, TCR 이중특이항체의 임상 진입, 본태성 혈소판증가증의 새로운 항체 표적 등을 정리한 주간 브리프입니다."
-  },
-  {
-   "id": 134,
+   "id": 137,
    "title": "Targeted Tumor Irradiation Controls Localized CAR-T Cell Release of TNF - Bioengineer.org",
    "link": "https://news.google.com/rss/articles/CBMinAFBVV95cUxOaFZnYjhYZFZVY1R0NGswU01vSUlveXhGNEJuaWdSdk5La3J5TmJLa0VPNDF0V3Rzd2ZYWWliSGNLRjdhLW84QU5kcVNsREN6WGpsWDBCX3Y2MUJSWURHX1dwTllidS1ZNjlNRHVGUFU5dWNqb093MVNhVEpLU3RNMGJpQUhZTlF2MFdoM01NX2dMNnNtRGp5cHlpeWg?oc=5",
    "when": "2026-11-06T18:11:51+09:00",
@@ -292,10 +199,10 @@
     }
    ],
    "title_ko": "표적 종양 방사선 조사로 CAR-T 세포의 TNF 국소 방출 조절",
-   "summary": "표적 종양 방사선 조사를 통해 CAR-T 세포가 TNF를 국소적으로 분비하는 것을 조절할 수 있다는 연구 결과입니다."
+   "summary": "표적 종양 방사선 조사를 통해 CAR-T 세포의 TNF 방출을 국소적으로 조절하는 연구 결과가 소개되었습니다."
   },
   {
-   "id": 135,
+   "id": 138,
    "title": "Akeso's ivonescimab wins China priority review for first-line biliary tract cancer - AllSci",
    "link": "https://news.google.com/rss/articles/CBMigwFBVV95cUxPamNBbHhodHhHdVFyR0dLTnQxM25IeVhtb0FTYUZ0eXJyTXlPbm4zWlFObkxwb2ZZVDljM1ZER25JQTJPbXdscXIxTEVXZ3V5V0NDMVVOR25BbzVWMkhuWGdUTmdIcTlzQ1JKNVdhZlR2cTg4TTV5MHN2TFdQaXNlaFJvRQ?oc=5",
    "when": "2026-11-06T17:58:36+09:00",
@@ -305,7 +212,7 @@
     "康方生物"
    ],
    "snippet": "Akeso's ivonescimab wins China priority review for first-line biliary tract cancer    AllSci",
-   "cat": "other",
+   "cat": "reg",
    "breast": false,
    "score": 5.01,
    "lang": "en",
@@ -321,43 +228,85 @@
      "source": "康方生物"
     }
    ],
-   "title_ko": "Akeso 이반리주맙, 중국서 1차 담도암 우선심사 획득",
-   "summary": "Akeso의 이반리주맙이 중국에서 1차 담도암 치료에 대한 우선심사를 받았습니다."
+   "title_ko": "康方生物 이반리스맙, 중국서 1차 담도암 우선심사 획득",
+   "summary": "康方生物의 이반리스맙(ivonescimab)이 중국에서 1차 담도암 치료로 우선심사 대상이 되었습니다."
+  },
+  {
+   "id": 145,
+   "title": "보령, 3세대 표적항암 신약 'BR1500' 美 FDA 도전 …R&D 성과 잰걸음 - 머니투데이 - 머니투데이",
+   "link": "https://news.google.com/rss/articles/CBMiakFVX3lxTE9zNUNKcHBKRDgxVldwVUZ0SnJMWDY3SURmQldXbjdCMDQ3by14TkZWRV9rYTNrYjZRaWo1ZjA2bWlnNmNTalNSeUUwSWZOLWdUeGFSSmpRekFGZEpRenFnV2ZkZFhHbXJsQlHSAW9BVV95cUxORVBGazJaaVB5S3l2dlpxNlM2R3IyWnRldGtweDl5Slg0S0xzZjZwUTZVVzJGSGFqUmJnYjdVZE9aSndrS0Q1TWVSc05jaDFWX05UR0V3WlJmSWZob2ZOb0gySnhsWnoxYWJEUFE2UVE?oc=5",
+   "when": "2026-11-06T14:30:11+09:00",
+   "source": "머니투데이",
+   "sources": [
+    "머니투데이"
+   ],
+   "snippet": "보령, 3세대 표적항암 신약 'BR1500' 美 FDA 도전 …R&D 성과 잰걸음 - 머니투데이    머니투데이",
+   "cat": "targeted",
+   "breast": false,
+   "score": 4.96,
+   "lang": "ko",
+   "members": [
+    {
+     "title": "보령, 3세대 표적항암 신약 'BR1500' 美 FDA 도전 …R&D 성과 잰걸음 - 머니투데이 - 머니투데이",
+     "link": "https://news.google.com/rss/articles/CBMiakFVX3lxTE9zNUNKcHBKRDgxVldwVUZ0SnJMWDY3SURmQldXbjdCMDQ3by14TkZWRV9rYTNrYjZRaWo1ZjA2bWlnNmNTalNSeUUwSWZOLWdUeGFSSmpRekFGZEpRenFnV2ZkZFhHbXJsQlHSAW9BVV95cUxORVBGazJaaVB5S3l2dlpxNlM2R3IyWnRldGtweDl5Slg0S0xzZjZwUTZVVzJGSGFqUmJnYjdVZE9aSndrS0Q1TWVSc05jaDFWX05UR0V3WlJmSWZob2ZOb0gySnhsWnoxYWJEUFE2UVE?oc=5",
+     "source": "머니투데이"
+    }
+   ],
+   "title_ko": "보령, 3세대 표적항암 신약 BR1500 美 FDA 도전",
+   "summary": "보령이 3세대 표적항암 신약 BR1500으로 미국 FDA에 도전하며 R&D 성과를 이어가고 있습니다."
+  },
+  {
+   "id": 159,
+   "title": "Agenus Targets Phase 3 Colon Cancer Trial as Financing Hinges on Enrollment Milestones - TradingView",
+   "link": "https://news.google.com/rss/articles/CBMi4AFBVV95cUxPdmJ1d2tfYTUwQVF5RUV1Z2xUMkZQQTMtZXByeWZHaXV0OFNOLWRlODlKaU82c3ZJNzNzN1BaUnBwdTRCOGppQlZ6N0dxdWdsVHJxRUZxYXVZVjE4UmdRcS1sSUtXbjAyRkdJZHhBQy1LWnVmU2JsTzhIa0s4U25RSnZKLVgyWU1teUFFYmN2YU5ZMDFPR3hpaVpQXzlZN3gxX01WZWJPLTl3d3JsU1A4akE4dWU1bGVwdWk1N3gwc0h4cEZOTlJ5cGVQTVdyclFwX3B6NXFLOTNVcm5NUGgyNw?oc=5",
+   "when": "2026-11-06T06:14:41+09:00",
+   "source": "TradingView",
+   "sources": [
+    "TradingView"
+   ],
+   "snippet": "Agenus Targets Phase 3 Colon Cancer Trial as Financing Hinges on Enrollment Milestones    TradingView",
+   "cat": "trial",
+   "breast": false,
+   "score": 4.85,
+   "lang": "en",
+   "members": [
+    {
+     "title": "Agenus Targets Phase 3 Colon Cancer Trial as Financing Hinges on Enrollment Milestones - TradingView",
+     "link": "https://news.google.com/rss/articles/CBMi4AFBVV95cUxPdmJ1d2tfYTUwQVF5RUV1Z2xUMkZQQTMtZXByeWZHaXV0OFNOLWRlODlKaU82c3ZJNzNzN1BaUnBwdTRCOGppQlZ6N0dxdWdsVHJxRUZxYXVZVjE4UmdRcS1sSUtXbjAyRkdJZHhBQy1LWnVmU2JsTzhIa0s4U25RSnZKLVgyWU1teUFFYmN2YU5ZMDFPR3hpaVpQXzlZN3gxX01WZWJPLTl3d3JsU1A4akE4dWU1bGVwdWk1N3gwc0h4cEZOTlJ5cGVQTVdyclFwX3B6NXFLOTNVcm5NUGgyNw?oc=5",
+     "source": "TradingView"
+    }
+   ],
+   "title_ko": "Agenus, 등록 목표 달성에 따라 자금 조달이 좌우되는 대장암 3상 추진",
+   "summary": "Agenus가 환자 등록 이정표에 따라 자금 조달이 결정되는 대장암 3상 임상을 추진하고 있습니다."
+  },
+  {
+   "id": 171,
+   "title": "Genmab Reports 22% Revenue Growth as Phase 3 Results Strengthen Oncology Portfolio - TipRanks",
+   "link": "https://news.google.com/rss/articles/CBMizgFBVV95cUxPTGpGaFNlV2FjNDM2c2o0UEpRN1RNTGZGdjVIUGlVbDhXZEd1ajdTSG9RTDVRczViSUFkVzFwSHFrSVp5UUV4WV9ubG9tb21WRXVRQVdNbmxMVnNnRlNiaXpsR0FqMDdVWjhWcE1VN1FJRU5RUURuc1hpNmtzZnNWYkRpZHh1UDVybnVQaHpwNjJJc1FPSWFGYVBONW5BTS0zZFRqZkZNc1AxSTIyUmxZRXVxUFdyQzFFMjR1NGlaTldabkp2Q1RNMVdYRHctQQ?oc=5",
+   "when": "2026-11-06T01:33:15+09:00",
+   "source": "TipRanks",
+   "sources": [
+    "TipRanks"
+   ],
+   "snippet": "Genmab Reports 22% Revenue Growth as Phase 3 Results Strengthen Oncology Portfolio    TipRanks",
+   "cat": "biz",
+   "breast": false,
+   "score": 4.78,
+   "lang": "en",
+   "members": [
+    {
+     "title": "Genmab Reports 22% Revenue Growth as Phase 3 Results Strengthen Oncology Portfolio - TipRanks",
+     "link": "https://news.google.com/rss/articles/CBMizgFBVV95cUxPTGpGaFNlV2FjNDM2c2o0UEpRN1RNTGZGdjVIUGlVbDhXZEd1ajdTSG9RTDVRczViSUFkVzFwSHFrSVp5UUV4WV9ubG9tb21WRXVRQVdNbmxMVnNnRlNiaXpsR0FqMDdVWjhWcE1VN1FJRU5RUURuc1hpNmtzZnNWYkRpZHh1UDVybnVQaHpwNjJJc1FPSWFGYVBONW5BTS0zZFRqZkZNc1AxSTIyUmxZRXVxUFdyQzFFMjR1NGlaTldabkp2Q1RNMVdYRHctQQ?oc=5",
+     "source": "TipRanks"
+    }
+   ],
+   "title_ko": "Genmab, 3상 결과 바탕 매출 22% 성장 발표",
+   "summary": "Genmab이 3상 결과에 힘입어 매출이 22% 성장했다고 발표했습니다."
   }
  ],
  "breast": [
   {
-   "id": 140,
-   "title": "포항세명기독병원 백남선 암병원장, 국제학술대회·글로벌 웨비나서 유방암 치료 경험 공유 - NSP통신",
-   "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE1fWG9OaWhMb0pLNXFtMWNuT0UzM2lRQ1Y4RVFqcEc2QzkwS0VXZkxDWmZNdldicjl1S1FfX1NTUm9PNG5uRTEtdUwwTjE5N3EzM2RUXzJpUGxJNUg4dHZUOQ?oc=5",
-   "when": "2026-11-06T14:46:35+09:00",
-   "source": "NSP통신",
-   "sources": [
-    "NSP통신",
-    "아이뉴스24"
-   ],
-   "snippet": "포항세명기독병원 백남선 암병원장, 국제학술대회·글로벌 웨비나서 유방암 치료 경험 공유    NSP통신",
-   "cat": "other",
-   "breast": true,
-   "score": 4.97,
-   "lang": "ko",
-   "members": [
-    {
-     "title": "포항세명기독병원 백남선 암병원장, 국제학술대회·글로벌 웨비나서 유방암 치료 경험 공유 - NSP통신",
-     "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE1fWG9OaWhMb0pLNXFtMWNuT0UzM2lRQ1Y4RVFqcEc2QzkwS0VXZkxDWmZNdldicjl1S1FfX1NTUm9PNG5uRTEtdUwwTjE5N3EzM2RUXzJpUGxJNUg4dHZUOQ?oc=5",
-     "source": "NSP통신"
-    },
-    {
-     "title": "세명기독병원 백남선 암병원장, 국제무대서 유방암 진료 경험 공유 - 아이뉴스24",
-     "link": "https://news.google.com/rss/articles/CBMiS0FVX3lxTE9UTmgyMUZHVHZibEtVRjhEeGlYSGx0dEFzX2NkbVJIdmZ6dDFyR2tkVEUwelVGczl3ekt6dV96Wmc2aXFDNDROSlhLcw?oc=5",
-     "source": "아이뉴스24"
-    }
-   ],
-   "title_ko": "포항세명기독병원 백남선 암병원장, 국제학술대회서 유방암 치료 경험 공유",
-   "summary": "백남선 암병원장이 국제학술대회와 글로벌 웨비나에서 유방암 치료 경험을 공유했습니다."
-  },
-  {
-   "id": 250,
+   "id": 252,
    "title": "Tucatinib With Trastuzumab and Pertuzumab Approved for HER2-Positive Breast Cancer Maintenance - Clinical Oncology News",
    "link": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxNM1FNb21ybWMtaVZEVXVSY1VhQTBkX050ZlNhd1JJbzNYU3FrMEdwVnVkWDFnb25DLTNOZlBQT1JudkJmVnVEdHVxa1RiblR6UFBTUEI3aElqX05NZWdfZEE2WGpuVTVLc1czUEQyX2FnT0IzS3p5MDJnNEdZanRTRmctMEt4RHhrUktlMWxySkE4dVZUZXhKZENJbWhMQjBxZ0xndFg4UXgweTBjdUJfSnVrOF9uV0tkdzFGMUxxQkVSa1E?oc=5",
    "when": "2026-11-04T19:07:30+09:00",
@@ -377,11 +326,11 @@
      "source": "Clinical Oncology News"
     }
    ],
-   "title_ko": "투카티닙 병용요법, HER2 양성 유방암 유지요법 승인",
-   "summary": "투카티닙과 트라스투주맙, 페르투주맙 병용요법이 HER2 양성 유방암 유지요법으로 승인됐습니다."
+   "title_ko": "HER2 양성 유방암 유지요법으로 투카티닙 병용 요법 승인",
+   "summary": "투카티닙을 트라스투주맙, 퍼투주맙과 병용하는 요법이 HER2 양성 유방암 유지요법으로 승인되었습니다."
   },
   {
-   "id": 304,
+   "id": 306,
    "title": "Camizestrant Approval Paves the Way for ctDNA-Guided Switching in Emergent ESR1-Mutated HR+/HER2– Advanced Breast Cancer - OncLive",
    "link": "https://news.google.com/rss/articles/CBMi4AFBVV95cUxQOUZUNm15amNkUEJJNmp2cVVOWVZ6WGxtcUJtWUs2dnEtVUR1TUVOcE45UG95UV9HcllrM2FvaWQ5NmZzQjhTZG8zbVFkVDVuR2RuamZkTnp1MEJqYzhpckowYk5idE5SbWc0V0RZTzlqTnRUdTQyOVNMZEJfai0wc2c4cTd6SS1qLXVlTTVZV0ZER0tvazZOSkxMOXpWb3NKLThKaWN6R2c1ajEzTG55LTFsVlB0cFJNSU1NZndnTnVNY1RNWUk0Xy1MSXVnX0VHeEtyY2NudEliYW9xWHlFRw?oc=5",
    "when": "2026-11-03T08:42:47+09:00",
@@ -407,8 +356,48 @@
     }
    ],
    "title_ko": "카미제스트란트 승인, ESR1 변이 HR+/HER2- 진행성 유방암에서 ctDNA 기반 전환 치료 길 열어",
-   "summary": "카미제스트란트 승인으로 ESR1 변이가 나타난 HR+/HER2- 진행성 유방암에서 ctDNA 기준 치료 전환이 가능해졌습니다."
+   "summary": "카미제스트란트 승인으로 ESR1 변이가 생긴 HR+/HER2- 진행성 유방암에서 ctDNA 기반 치료 전환의 길이 열렸습니다."
+  },
+  {
+   "id": 331,
+   "title": "리가켐바이오 ADC, 엔허투 치료 유방암 환자에서 효능 확인 - 헬로디디",
+   "link": "https://news.google.com/rss/articles/CBMiakFVX3lxTE4yUVF2Z0xjQUFaX0NiTGJVcDBWM2stSjdETkowQl8yUFZxQWhHekpDbzZzYVFaZzNmaHNlUlRYazdiNERfSnJLMHRNZ1lIMjZnbGQtS2R6cVR2UEZaTFFUaHV4YjRmaGFGNnc?oc=5",
+   "when": "2026-11-02T15:40:00+09:00",
+   "source": "헬로디디",
+   "sources": [
+    "서울경제",
+    "헬로디디"
+   ],
+   "snippet": "리가켐바이오 ADC, 엔허투 치료 유방암 환자에서 효능 확인    헬로디디",
+   "cat": "adc",
+   "breast": true,
+   "score": 4,
+   "lang": "ko",
+   "members": [
+    {
+     "title": "리가켐바이오 ADC, 엔허투 치료 유방암 환자에서 효능 확인 - 헬로디디",
+     "link": "https://news.google.com/rss/articles/CBMiakFVX3lxTE4yUVF2Z0xjQUFaX0NiTGJVcDBWM2stSjdETkowQl8yUFZxQWhHekpDbzZzYVFaZzNmaHNlUlRYazdiNERfSnJLMHRNZ1lIMjZnbGQtS2R6cVR2UEZaTFFUaHV4YjRmaGFGNnc?oc=5",
+     "source": "헬로디디"
+    },
+    {
+     "title": "리가켐바이오 ADC, 엔허투 치료 유방암 환자에서 효능 확인 - 헬로디디",
+     "link": "https://news.google.com/rss/articles/CBMiakFVX3lxTE4yUVF2Z0xjQUFaX0NiTGJVcDBWM2stSjdETkowQl8yUFZxQWhHekpDbzZzYVFaZzNmaHNlUlRYazdiNERfSnJLMHRNZ1lIMjZnbGQtS2R6cVR2UEZaTFFUaHV4YjRmaGFGNnc?oc=5",
+     "source": "헬로디디"
+    },
+    {
+     "title": "리가켐바이오 ADC, 엔허투 치료 유방암서 반응률 50% - 서울경제",
+     "link": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE9SVVVsUXNHc3R5U1JtdjNBUWY3bHBMZEhvSHVWNndDbWpVWm0wTnlqNDRicS1vWG5xZXM3V19GeTllMDZpZ2ppUGF3U3JvQjA4V3fSAVNBVV95cUxOUWJDUW51alBQQkNoX3RYMHdheGViaDFWdFRYaWRQcXhjcTlqNFV5bno0b2R2QWUxMlR4OUxGaVd4M0RzQnE5WldjSXd6M0l1WXF3RQ?oc=5",
+     "source": "서울경제"
+    },
+    {
+     "title": "리가켐바이오 ADC, 엔허투 치료 유방암서 반응률 50% - 서울경제",
+     "link": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE9SVVVsUXNHc3R5U1JtdjNBUWY3bHBMZEhvSHVWNndDbWpVWm0wTnlqNDRicS1vWG5xZXM3V19GeTllMDZpZ2ppUGF3U3JvQjA4V3fSAVNBVV95cUxOUWJDUW51alBQQkNoX3RYMHdheGViaDFWdFRYaWRQcXhjcTlqNFV5bno0b2R2QWUxMlR4OUxGaVd4M0RzQnE5WldjSXd6M0l1WXF3RQ?oc=5",
+     "source": "서울경제"
+    }
+   ],
+   "title_ko": "리가켐바이오 ADC, 엔허투 치료 유방암 환자에서 효능 확인",
+   "summary": "리가켐바이오의 ADC가 엔허투 치료를 받은 유방암 환자에서 효능을 확인했다는 소식입니다."
   }
  ],
- "total_clusters": 356
+ "total_clusters": 358
 }
