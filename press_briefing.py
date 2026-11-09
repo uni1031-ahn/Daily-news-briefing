@@ -61,13 +61,13 @@ INSTITUTIONS = [
     dict(field="보험", name="손해보험협회", url="https://www.knia.or.kr/data/news"),
     dict(field="보험", name="신용정보원",
          url="https://www.kcredit.or.kr:1441/notice/pressRelease.do?menuNo=320&hpBoardSn=PRESS&link=notice%2FpressRelease.do",
-         warmup="https://www.kcredit.or.kr:1441/"),
+         api="kcredit"),
     dict(field="의료", name="보건복지부", url="https://www.mohw.go.kr/board.es?mid=a10503010100&bid=0027",
          link_fmt="https://www.mohw.go.kr/board.es?mid=a10503010100&bid=0027&act=view&list_no={id}"),
     dict(field="의료", name="건강보험심사평가원", url="https://www.hira.or.kr/bbsDummy.do?pgmid=HIRAA020041000100"),
     dict(field="의료", name="국민건강보험공단", url="https://www.nhis.or.kr/nhis/together/wbhaea01600m01.do"),
     dict(field="의료", name="국민장기요양보험",
-         url="https://www.longtermcare.or.kr/npbs/d/m/000/moveBoardView?menuId=npe0000002787&bKey=B0010"),
+         url="https://www.longtermcare.or.kr/npbs/cms/board/board/Board.jsp?communityKey=B0010&menuId=npe0000002787&bKey=B0010"),
     dict(field="의료", name="질병관리청",
          url="https://www.kdca.go.kr/kdca/2848/subview.do?enc=Zm5jdDF8QEB8JTJGYmJzJTJGa2RjYSUyRjQyJTJGYXJ0Y2xMaXN0LmRvJTNG",
          link_re=r"jf_viewArtcl\('(\w+)'(?:%20|\s|,|')+(\d+)(?:%20|\s|,|')+(\d+)",
@@ -381,6 +381,8 @@ def detail_info(session, url):
 
 # ───────────────────────── 기관별 수집 ─────────────────────────
 def fetch_institution(inst, debug_dir=None):
+    if inst.get("api") == "kcredit":
+        return fetch_kcredit(inst, debug_dir)
     st = dict(name=inst["name"], field=inst["field"], insurance_only=bool(inst.get("topic")), topic=inst.get("topic") or "",
               ok=False, http=None, kb=0, rows=0, newest=None, total_window=0, error="", note="")
     items = []
@@ -424,6 +426,85 @@ def fetch_institution(inst, debug_dir=None):
     for it in rows:
         it["source"] = inst["name"]
         items.append(it)
+    return st, items, session
+
+
+KCREDIT_BASE = "https://www.kcredit.or.kr:1441"
+
+
+def fetch_kcredit(inst, debug_dir=None):
+    """신용정보원: 목록을 화면이 열린 뒤 JSON으로 불러오는 사이트 → 같은 JSON 주소를 직접 호출 (사이트 스크립트에서 확인한 방식)."""
+    st = dict(name=inst["name"], field=inst["field"], insurance_only=bool(inst.get("topic")), topic=inst.get("topic") or "",
+              ok=False, http=None, kb=0, rows=0, newest=None, total_window=0, error="", note="")
+    items = []
+    session = make_session()
+    r, err = http_get(session, inst["url"])
+    if r is None:
+        st["error"] = f"접속 실패 ({err})"
+        return st, items, session
+    st["http"] = r.status_code
+    if r.status_code != 200:
+        st["error"] = f"HTTP {r.status_code} 응답 (접근 차단 또는 주소 변경 가능성)"
+        return st, items, session
+    page = decode(r)
+    m = re.search(r'name="_csrf"\s+content="([^"]+)"', page)
+    mh = re.search(r'name="_csrf_header"\s+content="([^"]+)"', page)
+    sn = (re.search(r'data-hp_board_sn="(\w*)"', page) or [None, "1"])[1] or "1"
+    cnt = (re.search(r'data-list_cnt="(\d+)"', page) or [None, "15"])[1]
+    headers = {"Content-Type": "application/json", "Accept": "application/json, text/javascript, */*; q=0.01",
+               "X-Requested-With": "XMLHttpRequest", "Referer": r.url or inst["url"]}
+    if m:
+        headers[mh.group(1) if mh else "X-CSRF-TOKEN"] = m.group(1)
+    payload = dict(hpBoardSn=sn, listCnt=cnt, sortType="DESC", currentPageTxt="1", startDate="",
+                   searchFiledCbo="all", searchTextEdt="", searchCategoryDivCbo="")
+    try:
+        rr = session.post(KCREDIT_BASE + "/board/selectBoardList.do", json=payload, headers=headers, timeout=30)
+    except requests.exceptions.RequestException as ex:
+        st["error"] = f"목록 요청 실패 ({type(ex).__name__}: {str(ex)[:100]})"
+        return st, items, session
+    st["kb"] = round(len(rr.content) / 1024)
+    if debug_dir:
+        os.makedirs(debug_dir, exist_ok=True)
+        with open(os.path.join(debug_dir, f"{inst['name']}.json"), "w", encoding="utf-8") as f:
+            f.write(rr.text)
+    if rr.status_code != 200:
+        st["error"] = f"목록 요청 HTTP {rr.status_code} (CSRF 또는 요청 형식 확인 필요)"
+        return st, items, session
+    try:
+        data = rr.json()
+        lst = data.get("boardList") or []
+    except Exception:
+        st["error"] = "목록 응답이 JSON이 아님 (요청 형식 확인 필요)"
+        return st, items, session
+    for b in lst:
+        d, t = parse_date(str(b.get("regDt") or ""))
+        title = sp(html.unescape(str(b.get("title") or "")))
+        bid = b.get("hpBoardIdSn")
+        if not (d and title and bid):
+            continue
+        link = f"{KCREDIT_BASE}/notice/pressReleaseView.do?menuNo=320&hpBoardSn={sn}&hpBoardIdSn={bid}"
+        dept = sp(str(b.get("userDeptCd") or ""))
+        it = dict(title=title, link=link, link_is_list=False, date=d, time=t,
+                  dept=dept if re.search(r"[가-힣]", dept) else "", source=inst["name"])
+
+        def _detail(bid=bid, sn=sn, session=session, headers=headers):
+            try:
+                x = session.post(KCREDIT_BASE + "/board/selectBoard.do",
+                                 json=dict(hpBoardSn=sn, hpBoardIdSn=str(bid), sortType="DESC"),
+                                 headers=headers, timeout=25)
+                content = (x.json().get("board") or {}).get("content") or ""
+                txt = sp(LH.fromstring("<div>" + html.unescape(content) + "</div>").text_content()) if content else ""
+                return txt, "", ""
+            except Exception as ex:
+                return "", "", str(ex)[:80]
+        it["detail_fn"] = _detail
+        items.append(it)
+    st["rows"] = len(items)
+    if not items:
+        st["error"] = "목록 응답에 게시글이 없음 (요청 형식 확인 필요)"
+        return st, items, session
+    st["ok"] = True
+    st["newest"] = max(x["date"] for x in items)
     return st, items, session
 
 
@@ -473,6 +554,12 @@ def apply_insurance_filter(inst, st, win, session, check_only=False):
 def fill_summaries(items, sessions):
     def work(it):
         pre = it.get("_detail")
+        if it.get("detail_fn"):
+            txt, dept, _ = it["detail_fn"]()
+            if dept and not it.get("dept"):
+                it["dept"] = dept
+            it["summary"] = make_summary(txt, it["title"])
+            return
         if pre:
             txt, dept = pre
         elif it["link_is_list"]:
