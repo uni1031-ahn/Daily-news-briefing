@@ -230,8 +230,12 @@ def ai_summarize(top, breast):
     prompt = (
         "다음은 이번 주 항암 분야 기사 제목/스니펫입니다. 제공된 텍스트에 있는 사실만 사용하세요. "
         "제목·스니펫에 없는 수치, 효능, 승인 여부를 추측하지 마세요.\n"
+        "- 같은 사건(같은 약·같은 승인·같은 발표)을 다룬 항목은 가장 정보가 많은 하나만 남기고 나머지에는 same_as 에 그 id를 적으세요. "
+        "영문/국문 기사, 매체가 달라도 같은 사건이면 중복입니다.\n"
+        "- title_ko 에는 매체명을 붙이지 마세요. 영문 기사는 한국어로 번역하세요.\n"
+        "- summary 에서 '수치가 없다/제공되지 않았다' 같은 부재 언급은 하지 말고, 알 수 있는 사실만 쓰세요.\n"
         "JSON만 출력: {\"headline\": \"이번 주 흐름 1~2문장(한국어)\", "
-        "\"items\": [{\"id\": 번호, \"title_ko\": \"한국어 제목(영문 기사는 번역)\", \"summary\": \"1~2문장 한국어 요약\"}]}\n\n"
+        "\"items\": [{\"id\": 번호, \"same_as\": 중복이면 대표 id 아니면 null, \"title_ko\": \"한국어 제목\", \"summary\": \"1~2문장 한국어 요약\"}]}\n\n"
         + json.dumps(items, ensure_ascii=False))
     base = {"model": model, "max_tokens": 8000, "messages": [{"role": "user", "content": prompt}]}
     hd = {"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"}
@@ -265,6 +269,8 @@ def apply_ai(clusters, ai):
         x = by_id.get(c["id"])
         if x:
             c["title_ko"], c["summary"] = x.get("title_ko"), x.get("summary")
+            if x.get("same_as") not in (None, "", c["id"]):
+                c["dup_of"] = x["same_as"]
     return ai.get("headline", "")
 
 # ---------------------------------------------------------------- HTML 조각 (메일 호환: table+인라인 스타일)
@@ -377,9 +383,9 @@ def main():
             sys.exit(1)
         clusters = cluster(arts, now)
         trend, prev = trend_counts(clusters), load_prev(week_label)
-        top = clusters[:MAX_ITEMS]
-        breast_all = [c for c in clusters if c["breast"] and c not in top][:3]
-        ai = None if args.no_ai else ai_summarize(top, breast_all)
+        cand = clusters[:MAX_ITEMS * 2]          # 중복 제거 후에도 10건이 남도록 넉넉히 요약
+        breast_all = [c for c in clusters if c["breast"] and c not in cand][:3]
+        ai = None if args.no_ai else ai_summarize(cand, breast_all)
         headline = apply_ai(clusters, ai)
         ai_used = bool(ai)
         if not headline:
@@ -387,11 +393,14 @@ def main():
             for c in clusters: n_cat[c["cat"]] = n_cat.get(c["cat"], 0) + 1
             parts = [f"{CAT_LABEL[k]} {v}건" for k, v in sorted(n_cat.items(), key=lambda kv: -kv[1])[:3]]
             headline = f"이번 주 항암 관련 {len(clusters)}개 이슈 중 " + ", ".join(parts) + " 순으로 많았습니다."
-    top = clusters[:MAX_ITEMS]
-    breast = [c for c in clusters if c["breast"]][:3] if args.demo else [c for c in clusters if c["breast"] and c not in top][:3]
-    if not args.demo:
-        # 유방암 워치: 상위에 이미 오른 건 제외하고 별도 3건
-        pass
+    if args.demo:
+        top = clusters[:MAX_ITEMS]
+        breast = [c for c in clusters if c["breast"]][:3]
+    else:
+        pool = [c for c in clusters[:MAX_ITEMS * 2] if not c.get("dup_of")]   # AI가 지목한 중복 제외
+        top = pool[:MAX_ITEMS]
+        # 유방암 워치: 상위에 이미 오른 건 제외하고 별도 3건 (중복 지목분도 제외)
+        breast = [c for c in clusters if c["breast"] and c not in top and not c.get("dup_of")][:3]
     section = render_section(week_label, start, end, headline, top, breast, trend, prev, args.demo, ai_used)
     save(week_label, start, end, headline, clusters, top, breast, trend, section, args.demo)
     log(f"완료: {OUT_DIR}/latest_section.html ({week_label}{' DEMO' if args.demo else ''})")
