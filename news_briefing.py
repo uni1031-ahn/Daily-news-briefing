@@ -266,8 +266,13 @@ JOSA = ("으로", "에서", "에게", "까지", "부터", "이나", "에는", "�
         "와", "과", "은", "는", "이", "가", "을", "를", "의", "에", "로", "도")
 
 
+NUM_FACT = re.compile(r"\d{2,}(억|조|만|명|건|곳|개사|개|배)")      # 사건을 가려내는 구체적 숫자('17억'·'802명'). 연·월·분기·% 는 제외
+
+
 def stem(w: str) -> str:
-    """단어 끝의 조사를 떼어 '65만명에'와 '65만명', '지원에'와 '지원'을 같은 단어로 취급."""
+    """단어 끝의 조사를 떼어 '65만명에'와 '65만명', '지원에'와 '지원'을 같은 단어로 취급. '17억원'은 '17억'으로 통일."""
+    if re.fullmatch(r"\d[\d,]*(억|조|만)원", w):
+        return w[:-1]
     if len(w) >= 3:
         for j in JOSA:
             if w.endswith(j) and len(w) - len(j) >= 2:
@@ -330,6 +335,11 @@ def similar(n1, t1, n2, t2, q1=frozenset(), q2=frozenset(), d1=frozenset(), d2=f
         #     단, 양쪽 제목에 서로 다른 상품명(따옴표 문구)이 있으면 다른 상품 기사로 보고 제외
         or (f1 == f2 and len(common) >= 4 and overlap >= 0.5 and not quote_conflict(q1, q2))
     )
+    # (d) 같은 구체적 숫자(예: '17억'·'802명')를 공유하고 다른 공통 단어가 2개 이상 — 같은 사건을 제목만 다르게 쓴 기사.
+    #     숫자까지 같으면 본문 소개문이 서로 다른 부분을 다뤄도 같은 사건으로 본다(본문 안전장치 생략)
+    shared = {w for w in common if NUM_FACT.fullmatch(w)}
+    if shared and len(common) >= 3 and overlap >= 0.25 and len(common - shared) >= 2:
+        return True
     return bool(loose) and desc_ok(d1, d2)
 
 
