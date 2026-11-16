@@ -55,7 +55,7 @@ PER_CATEGORY = int(os.getenv("PER_CATEGORY", "5") or "5")          # 카테고�
 SUMMARY_CHARS = int(os.getenv("SUMMARY_CHARS", "230") or "230")    # 요약문 최대 글자 수 (줄이면 메일이 촘촘해짐)
 ROW_PAD = int(os.getenv("ROW_PAD", "4") or "4")                    # 표 행의 위아래 여백(px). 작을수록 촘촘함
 RUN_INFO = {"note": "", "warn": False}     # 메일 상단에 표시할 수집 현황(2차 수집 모듈이 채움)
-BUILD = "v3.15-ai-scope4"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
+BUILD = "v3.16-ai-scope5"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
 
 SOURCES = {
     "보험": {
@@ -880,15 +880,16 @@ def ai_curate_extra(field: str, pool):
     scope = MED_SCOPE if field == "의료" else INS_SCOPE
     prompt = (f"당신은 {field} 분야 뉴스 브리핑의 편집자입니다. 아래 기사들에 대해 두 가지를 하세요.\n\n"
               f"범위\n{scope}\n\n"
-              "1) 범위 밖 기사는 drop 하세요. 제목에 '의료'·'병원'·'보험' 같은 말이 있어도 중심 내용이 범위 밖이면 drop입니다. "
-              + ("애매하면 drop입니다." if field == "의료" else "애매하면 drop하지 말고 남기세요.")
-              + " 범위 안 기사는 절대 drop하지 마세요. why에는 범위 밖인 이유만 쓰세요.\n"
-              "2) drop 하지 않은 기사 중 같은 사건·같은 통계·같은 발표를 다룬 기사끼리 묶으세요. 제목이 달라도 같은 사건이면 같은 묶음입니다. "
+              "1) 기사마다 범위 안인지 판정하세요. 제목에 '의료'·'병원'·'보험' 같은 말이 있어도 중심 내용이 범위 밖이면 keep=false입니다. "
+              + ("애매하면 keep=false입니다." if field == "의료" else "애매하면 keep=true입니다.")
+              + " 범위 안 기사는 반드시 keep=true입니다. 대부분의 기사는 범위 안일 수 있으니 전부 제외하지 마세요. "
+              "why를 먼저 쓰고 그 이유와 같은 방향으로 keep을 쓰세요.\n"
+              "2) keep=true인 기사 중 같은 사건·같은 통계·같은 발표를 다룬 기사끼리 묶으세요. 제목이 달라도 같은 사건이면 같은 묶음입니다. "
               "묶음에는 2건 이상 든 경우만 적으세요.\n\n기사:\n"
               + "\n".join(_ai_line(i, c) for i, c in enumerate(pool, 1))
-              + '\n\n반드시 JSON 객체만 출력하세요. 형식: {"drop":[번호,...],"why":{"번호":"이유 한 문장"},"groups":[[번호,번호],...]}')
-    res = parse_json_loose(claude_text(prompt, max_tokens=3000))
-    if not isinstance(res, dict):
+              + '\n\n반드시 JSON 객체만 출력하세요. 형식: {"items":[{"n":1,"why":"이유 한 문장","keep":true},...],"groups":[[번호,번호],...]} (모든 기사에 하나씩)')
+    res = parse_json_loose(claude_text(prompt, max_tokens=8000))
+    if not isinstance(res, dict) or not isinstance(res.get("items"), list):
         print(f"[AI 판정·{field}·기타 매체] 결과를 읽지 못해 규칙 결과를 그대로 씁니다")
         return pool, [], ""
     def _ints(xs):
@@ -901,12 +902,21 @@ def ai_curate_extra(field: str, pool):
             if 1 <= v <= len(pool):
                 out.append(v - 1)
         return out
-    drop = set(_ints(res.get("drop")))
-    why = res.get("why") or {}
-    for i in sorted(drop):
-        if _contradicts(why.get(str(i + 1))):
-            print(f"[AI 모순·{field}·기타 매체] 이유가 범위 안이라 남김: {pool[i]['articles'][0]['title'][:40]} — {str(why.get(str(i + 1), ''))[:50]}")
-            drop.discard(i)
+    drop, why = set(), {}
+    for r in res["items"]:
+        try:
+            i = int(r.get("n")) - 1
+        except Exception:
+            continue
+        if 0 <= i < len(pool) and r.get("keep") is False:
+            if _contradicts(r.get("why")):
+                print(f"[AI 모순·{field}·기타 매체] 이유가 범위 안이라 남김: {pool[i]['articles'][0]['title'][:40]} — {str(r.get('why', ''))[:50]}")
+                continue
+            drop.add(i)
+            why[str(i + 1)] = r.get("why", "")
+    if len(pool) >= 10 and len(drop) > 0.7 * len(pool):
+        print(f"[AI 이상·{field}·기타 매체] {len(pool)}건 중 {len(drop)}건 제외는 과도해 AI 판정을 쓰지 않습니다")
+        return pool, [], f"{field} AI 판정 이상(무시)"
     for i in sorted(drop):
         print(f"[AI 제외·{field}·기타 매체] {pool[i]['articles'][0]['title'][:50]} — {str(why.get(str(i + 1), ''))[:60]}")
     removed, merged = set(), 0

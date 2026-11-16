@@ -377,12 +377,12 @@ def run(nb, primary_items, hours, mark_seen=True):
     today = datetime.now(KST).strftime("%Y-%m-%d")
     for field in keywords:
         pool = sorted((c for c in fresh if c["articles"][0]["field"] == field),
-                      key=lambda c: (len({a["source"] for a in c["articles"]}), newest(c)), reverse=True)[:PER_FIELD * 16]
+                      key=lambda c: (len({a["source"] for a in c["articles"]}), newest(c)), reverse=True)[:PER_FIELD * 10]
         if PROBE:
             cut = {id(c) for c in pool}
             for c in fresh:
                 if c["articles"][0]["field"] == field and id(c) not in cut and any(_hit(a) for a in c["articles"]):
-                    _p(f"{field}: 후보가 많아 AI 판정 대상({PER_FIELD * 16}개)에도 못 들고 잘림: {c['articles'][0]['title']}")
+                    _p(f"{field}: 후보가 많아 AI 판정 대상({PER_FIELD * 10}개)에도 못 들고 잘림: {c['articles'][0]['title']}")
         cur = getattr(nb, "ai_curate_extra", None)       # AI로 분야 밖 기사 제외 + 같은 사건 묶기 (키가 없거나 실패하면 그대로)
         if cur is not None and pool:
             try:
