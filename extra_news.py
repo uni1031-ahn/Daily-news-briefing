@@ -336,11 +336,23 @@ def run(nb, primary_items, hours, mark_seen=True):
     def newest(c):
         return max((a["pub"] for a in c["articles"] if a["pub"]), default=nb.EPOCH)
 
-    sections, picked = {}, 0
+    sections, picked, ai_notes = {}, 0, []
     today = datetime.now(KST).strftime("%Y-%m-%d")
     for field in keywords:
         pool = sorted((c for c in fresh if c["articles"][0]["field"] == field),
-                      key=lambda c: (len({a["source"] for a in c["articles"]}), newest(c)), reverse=True)[:PER_FIELD]
+                      key=lambda c: (len({a["source"] for a in c["articles"]}), newest(c)), reverse=True)[:PER_FIELD * 6]
+        cur = getattr(nb, "ai_curate_extra", None)       # AI로 분야 밖 기사 제외 + 같은 사건 묶기 (키가 없거나 실패하면 그대로)
+        if cur is not None and pool:
+            try:
+                pool, ai_dropped, ai_txt = cur(field, pool)
+                if ai_txt:
+                    ai_notes.append(ai_txt)
+                for c in ai_dropped:                       # 제외한 기사는 내일 다시 올라오지 않게 기록
+                    for x in c["articles"]:
+                        seen[url_hash(x["origin"])] = today
+            except Exception as ex:
+                print(f"[2차] AI 정리 건너뜀({field}): {ex}", file=sys.stderr)
+        pool = pool[:PER_FIELD]
         for c in pool:
             a = c["articles"][0]
             c["url"] = a["link"]
@@ -360,7 +372,8 @@ def run(nb, primary_items, hours, mark_seen=True):
             print(f"[2차] 기록 저장 실패: {ex}", file=sys.stderr)
 
     note += (f" · 2차(네이버 뉴스, 최근 {HOURS}시간) 조회 {ok}/{total_q}회 성공, 후보 {len(kept)}건 → "
-             f"1차와 겹치지 않는 이슈 {len(fresh)}개 중 {picked}건 게재")
+             f"1차와 겹치지 않는 이슈 {len(fresh)}개 중 {picked}건 게재"
+             + (f" ({' / '.join(ai_notes)})" if ai_notes else ""))
     if errors:
         warn.append(f"2차 조회 오류 {len(errors)}건")
         print("[2차] 오류: " + "; ".join(errors), file=sys.stderr)

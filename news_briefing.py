@@ -55,7 +55,7 @@ PER_CATEGORY = int(os.getenv("PER_CATEGORY", "5") or "5")          # 카테고�
 SUMMARY_CHARS = int(os.getenv("SUMMARY_CHARS", "230") or "230")    # 요약문 최대 글자 수 (줄이면 메일이 촘촘해짐)
 ROW_PAD = int(os.getenv("ROW_PAD", "4") or "4")                    # 표 행의 위아래 여백(px). 작을수록 촘촘함
 RUN_INFO = {"note": "", "warn": False}     # 메일 상단에 표시할 수집 현황(2차 수집 모듈이 채움)
-BUILD = "v3.11-portal"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
+BUILD = "v3.12-ai-scope"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
 
 SOURCES = {
     "보험": {
@@ -769,6 +769,142 @@ def summarize(cl):
     time.sleep(0.3 if os.getenv("ANTHROPIC_API_KEY") else 1)
 
 
+# ───────────────────────── AI 범위 판정 (분야에 맞는 기사만 남기기) ─────────────────────────
+MED_SCOPE = ("의료·보건 분야 뉴스: 의료·건강보험 정책과 제도, 병원·의료기관 경영과 운영, 의사·간호 등 의료계 단체와 현안, "
+             "제약·바이오·신약·임상, 의료기기·디지털헬스, 질병 치료·연구 결과, 의료 학회·학술.\n"
+             "범위 밖: 지자체·정부의 일반 복지·민생·지원 사업(기사에 '의료'·'병원' 단어가 한 줄 들어 있어도), "
+             "기업의 사회공헌·봉사·기부·시상·공연·행사, 화장품·뷰티·스킨케어·건강식품 등 소비재 홍보와 제품 출시 홍보, 인사·동정.")
+INS_SCOPE = ("보험 분야 뉴스: 보험 상품·특약·약관, 보험사 경영·실적·인수합병, 보험 감독·정책·제도, GA·설계사·판매채널, "
+             "보험금 지급·분쟁·소비자 이슈, 보험사기, 보험 관련 디지털·AI.\n"
+             "범위 밖: 은행·증권·카드·대출·부동산·가상자산이 중심인 기사(보험은 곁다리), 일반 금융 정보, "
+             "기업 홍보·행사·사회공헌, 보험과 관계없는 일반 뉴스.")
+AI_STATS = {"calls": 0, "fail": 0, "dropped": 0}
+
+
+def claude_text(prompt: str, max_tokens: int = 3000) -> str:
+    """Claude에 한 번 물어 글자만 받아 온다. 키가 없거나 실패하면 빈 문자열."""
+    key = (os.getenv("ANTHROPIC_API_KEY") or "").strip()
+    if not key:
+        return ""
+    url = os.getenv("ANTHROPIC_URL", "https://api.anthropic.com/v1/messages")
+    hd = {"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"}
+    body = {"model": os.getenv("NEWS_AI_MODEL") or os.getenv("CLAUDE_MODEL", "claude-haiku-5-5"),
+            "max_tokens": max_tokens, "messages": [{"role": "user", "content": prompt}]}
+    AI_STATS["calls"] += 1
+    try:
+        r = requests.post(url, timeout=60, headers=hd, json={**body, "thinking": {"type": "disabled"}})
+        if r.status_code == 400:
+            r = requests.post(url, timeout=60, headers=hd, json=body)
+        if r.status_code != 200:
+            AI_STATS["fail"] += 1
+            print(f"[AI 판정] 오류 {r.status_code}: {r.text[:150]}")
+            return ""
+        return "".join(b.get("text", "") for b in r.json().get("content", []) if b.get("type", "text") == "text").strip()
+    except Exception as ex:
+        AI_STATS["fail"] += 1
+        print(f"[AI 판정] 실패: {ex}")
+        return ""
+
+
+def parse_json_loose(text: str):
+    """답변에서 첫 JSON(배열 또는 객체)을 꺼낸다. 실패하면 None."""
+    import json as _json
+    m = re.search(r"[\[{]", text or "")
+    if not m:
+        return None
+    dec = _json.JSONDecoder()
+    try:
+        return dec.raw_decode(text[m.start():])[0]
+    except Exception:
+        return None
+
+
+def _ai_line(i, c) -> str:
+    a = c["articles"][0]
+    d = clean_text(a.get("desc", "") or "")[:90].replace("\n", " ")
+    return f"{i}. {a['title']}" + (f" | {d}" if d else "")
+
+
+def ai_filter_other(field: str, clusters, strict: bool = False) -> int:
+    """'기타'로 분류된 기사 중 이 분야 뉴스가 아닌 것을 AI로 걸러낸다(분류를 '제외'로 바꿈). 반환: 제외 건수."""
+    todo = [c for c in clusters if c.get("cat") == "기타"][:60]
+    if not todo or not (os.getenv("ANTHROPIC_API_KEY") or "").strip():
+        return 0
+    scope = MED_SCOPE if field == "의료" else INS_SCOPE
+    prompt = (f"당신은 {field} 분야 뉴스 브리핑의 편집자입니다. 아래 기사가 브리핑에 실릴 '{field} 분야 뉴스'인지 판정하세요.\n\n"
+              f"범위\n{scope}\n\n"
+              f"판정: keep=범위에 드는 기사, drop=범위 밖 기사. 제목에 '의료'·'병원'·'보험' 같은 말이 있어도 기사의 중심 내용이 "
+              f"범위 밖이면 drop입니다. 애매하면 {'drop' if strict else 'keep'}입니다.\n\n기사:\n"
+              + "\n".join(_ai_line(i, c) for i, c in enumerate(todo, 1))
+              + '\n\n반드시 JSON 배열만 출력하세요. 형식: [{"n":번호,"keep":true,"why":"이유 한 문장"}]')
+    res = parse_json_loose(claude_text(prompt))
+    if not isinstance(res, list):
+        print(f"[AI 판정·{field}·기타] 결과를 읽지 못해 규칙 결과를 그대로 씁니다")
+        return 0
+    n = 0
+    for r in res:
+        try:
+            i = int(r.get("n"))
+        except Exception:
+            continue
+        if 1 <= i <= len(todo) and r.get("keep") is False:
+            c = todo[i - 1]
+            c["cat"], c["cat_how"] = "제외", "AI"
+            n += 1
+            print(f"[AI 제외·{field}·기타] {c['articles'][0]['title'][:50]} — {str(r.get('why', ''))[:60]}")
+    AI_STATS["dropped"] += n
+    print(f"[AI 판정·{field}·기타] {len(todo)}건 중 {n}건 제외")
+    return n
+
+
+def ai_curate_extra(field: str, pool):
+    """기타 매체 후보를 한 번에 판정: ① 이 분야 뉴스가 아닌 것 제외 ② 같은 사건을 다룬 기사 묶기.
+    반환: (정리된 목록, 제외된 묶음 목록, 요약문구). 키가 없거나 실패하면 (원래 목록, [], '')."""
+    if not pool or not (os.getenv("ANTHROPIC_API_KEY") or "").strip():
+        return pool, [], ""
+    scope = MED_SCOPE if field == "의료" else INS_SCOPE
+    prompt = (f"당신은 {field} 분야 뉴스 브리핑의 편집자입니다. 아래 기사들에 대해 두 가지를 하세요.\n\n"
+              f"범위\n{scope}\n\n"
+              "1) 범위 밖 기사는 drop 하세요. 제목에 '의료'·'병원'·'보험' 같은 말이 있어도 중심 내용이 범위 밖이면 drop, 애매해도 drop입니다.\n"
+              "2) drop 하지 않은 기사 중 같은 사건·같은 통계·같은 발표를 다룬 기사끼리 묶으세요. 제목이 달라도 같은 사건이면 같은 묶음입니다. "
+              "묶음에는 2건 이상 든 경우만 적으세요.\n\n기사:\n"
+              + "\n".join(_ai_line(i, c) for i, c in enumerate(pool, 1))
+              + '\n\n반드시 JSON 객체만 출력하세요. 형식: {"drop":[번호,...],"why":{"번호":"이유 한 문장"},"groups":[[번호,번호],...]}')
+    res = parse_json_loose(claude_text(prompt, max_tokens=3000))
+    if not isinstance(res, dict):
+        print(f"[AI 판정·{field}·기타 매체] 결과를 읽지 못해 규칙 결과를 그대로 씁니다")
+        return pool, [], ""
+    def _ints(xs):
+        out = []
+        for x in xs or []:
+            try:
+                v = int(x)
+            except Exception:
+                continue
+            if 1 <= v <= len(pool):
+                out.append(v - 1)
+        return out
+    drop = set(_ints(res.get("drop")))
+    why = res.get("why") or {}
+    for i in sorted(drop):
+        print(f"[AI 제외·{field}·기타 매체] {pool[i]['articles'][0]['title'][:50]} — {str(why.get(str(i + 1), ''))[:60]}")
+    removed, merged = set(), 0
+    for g in res.get("groups") or []:
+        idx = sorted({i for i in _ints(g) if i not in drop and i not in removed})
+        if len(idx) < 2:
+            continue
+        lead = idx[0]
+        for o in idx[1:]:
+            pool[lead]["articles"] += pool[o]["articles"]
+            removed.add(o)
+        merged += len(idx) - 1
+        print(f"[AI 묶음·{field}·기타 매체] {len(idx)}건 → 1건: {pool[lead]['articles'][0]['title'][:40]}")
+    kept = [c for i, c in enumerate(pool) if i not in drop and i not in removed]
+    dropped = [pool[i] for i in sorted(drop)]
+    AI_STATS["dropped"] += len(drop)
+    return kept, dropped, f"{field} AI 제외 {len(drop)}건·중복 묶음 {merged}건"
+
+
 # ───────────────────────── 포맷 ─────────────────────────
 def drop_repeated_summaries(clusters):
     """서로 다른 기사인데 요약 앞부분이 같으면(사이트 공통 홍보 문구 등) 요약을 비움."""
@@ -1241,6 +1377,7 @@ def main():
         if LAYOUT == "category" or args.sections:
             assign_categories(clusters, field)
             print_diagnostics(field, items, clusters)
+            ai_filter_other(field, clusters)          # '기타'로 분류된 기사 중 이 분야 뉴스가 아닌 것(화장품·공연·지자체 복지 등)을 AI로 제외
             if args.sections:
                 continue
             selected = select_by_category(clusters, field, PER_CATEGORY)
