@@ -55,7 +55,7 @@ PER_CATEGORY = int(os.getenv("PER_CATEGORY", "5") or "5")          # 카테고�
 SUMMARY_CHARS = int(os.getenv("SUMMARY_CHARS", "230") or "230")    # 요약문 최대 글자 수 (줄이면 메일이 촘촘해짐)
 ROW_PAD = int(os.getenv("ROW_PAD", "4") or "4")                    # 표 행의 위아래 여백(px). 작을수록 촘촘함
 RUN_INFO = {"note": "", "warn": False}     # 메일 상단에 표시할 수집 현황(2차 수집 모듈이 채움)
-BUILD = "v3.14-ai-scope3"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
+BUILD = "v3.15-ai-scope4"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
 
 SOURCES = {
     "보험": {
@@ -775,10 +775,11 @@ MED_SCOPE = ("의료·보건 분야 뉴스: 의료·건강보험 정책과 제�
              "범위 밖: 지자체·정부의 일반 복지·민생·지원 사업(기사에 '의료'·'병원' 단어가 한 줄 들어 있어도), "
              "기업의 사회공헌·봉사·기부·시상·공연·행사, 화장품·뷰티·스킨케어·건강식품 등 소비재 홍보와 제품 출시 홍보, 인사·동정, "
              "방송 드라마·연예·스포츠, 학생 대회·대학원 모집 등 교육 홍보.\n"
-             "범위 안(제외하면 안 됨): 건강보험공단·심평원 등 보건 기관의 권한·입법·정책 기사, 의사단체의 정책 대응, 제약사의 허가·임상·실적 기사.")
+             "범위 안(제외하면 안 됨): 건강보험공단·심평원 등 보건 기관의 권한·입법·정책 기사, 의사단체의 정책 대응, 제약사·바이오 기업의 허가·임상·실적(매출·영업이익) 발표 기사는 모두 범위 안입니다.")
 INS_SCOPE = ("보험 분야 뉴스(사람의 생명·건강·상해·질병·치매·간병·암·실손 등 인보험 중심): 인보험 상품·특약·약관, 보험사 경영·실적·인수합병, "
              "보험 감독·정책·제도, GA·설계사·판매채널, 보험금 지급·분쟁·소비자 이슈, 보험사기, 보험 관련 디지털·AI.\n"
-             "범위 밖: 재물·주택·화재·누수·자동차·배상책임 등 인보험이 아닌 보험 상품 기사, 보험사의 재무·건전성 규제(예금보험료·자본규제 등)와 협회장 인선, "
+             "생명보험사·손해보험사·GA의 실적·경영전략·인수합병(M&A)·주가·신사업 기사는 보험사가 중심이면 범위 안입니다(실적에 자동차·재물이 섞여 있어도 보험사 기사이면 범위 안).\n"
+             "범위 밖: 재물·주택·화재·누수·자동차·배상책임 등 인보험이 아닌 보험 상품 기사, 예금보험료·자본규제 같은 재무·건전성 규제 자체가 주제인 기사와 협회장 인선, "
              "은행·증권·카드·대출·부동산·가상자산이 중심인 기사(보험은 곁다리), 일반 금융 정보, 기업 홍보·행사·사회공헌, 보험과 관계없는 일반 뉴스.\n"
              "범위 안(제외하면 안 됨): 보험협회·보험개발원 소식과 인보험 관련 업계 포럼·행사 보도, 암보험·건강보험·치매·간병·종신 등 인보험 신상품 소식.")
 AI_STATS = {"calls": 0, "fail": 0, "dropped": 0}
@@ -828,6 +829,14 @@ def _ai_line(i, c) -> str:
     return f"{i}. {a['title']}" + (f" | {d}" if d else "")
 
 
+_CONTRA = re.compile(r"범위 안|범위안|범위에 (?:든|해당|속)|제외 대상이 아니|제외하면 안|제외해선 안|보류|판단해야")
+
+
+def _contradicts(why) -> bool:
+    """이유 문장이 '범위 안'이라고 말하면서 drop으로 판정한 모순을 찾는다(모순이면 남긴다)."""
+    return bool(_CONTRA.search(str(why or "")))
+
+
 def ai_filter_other(field: str, clusters, strict: bool = False) -> int:
     """'기타'로 분류된 기사 중 이 분야 뉴스가 아닌 것을 AI로 걸러낸다(분류를 '제외'로 바꿈). 반환: 제외 건수."""
     todo = [c for c in clusters if c.get("cat") == "기타"][:60]
@@ -851,6 +860,9 @@ def ai_filter_other(field: str, clusters, strict: bool = False) -> int:
         except Exception:
             continue
         if 1 <= i <= len(todo) and r.get("keep") is False:
+            if _contradicts(r.get("why")):
+                print(f"[AI 모순·{field}·기타] 이유가 범위 안이라 남김: {todo[i - 1]['articles'][0]['title'][:40]} — {str(r.get('why', ''))[:50]}")
+                continue
             c = todo[i - 1]
             c["cat"], c["cat_how"] = "제외", "AI"
             n += 1
@@ -891,6 +903,10 @@ def ai_curate_extra(field: str, pool):
         return out
     drop = set(_ints(res.get("drop")))
     why = res.get("why") or {}
+    for i in sorted(drop):
+        if _contradicts(why.get(str(i + 1))):
+            print(f"[AI 모순·{field}·기타 매체] 이유가 범위 안이라 남김: {pool[i]['articles'][0]['title'][:40]} — {str(why.get(str(i + 1), ''))[:50]}")
+            drop.discard(i)
     for i in sorted(drop):
         print(f"[AI 제외·{field}·기타 매체] {pool[i]['articles'][0]['title'][:50]} — {str(why.get(str(i + 1), ''))[:60]}")
     removed, merged = set(), 0
