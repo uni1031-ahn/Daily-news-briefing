@@ -46,8 +46,7 @@ jobs:
           # 포털(보험 인사이트 포털)로 오늘 기사 보내기. 값이 없으면 건너뜁니다
           PORTAL_URL: ${{ secrets.PORTAL_URL }}
           SYNC_TOKEN: ${{ secrets.SYNC_TOKEN }}
-          EXTRA_PROBE: "주사"
-
+          
       - name: 누적 데이터 저장 (data/ 커밋)
         if: ${{ !cancelled() }}
         run: |
