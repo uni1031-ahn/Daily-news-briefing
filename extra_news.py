@@ -260,11 +260,28 @@ def fetch_query(session, query, cid, key, cutoff, pages=PAGES, display=100):
     return out
 
 
+INSURANCE_DESC = ["실손", "보험사", "보험금", "보험료", "손해보험", "생명보험", "설계사"]   # 제목에 없어도 소개문에 있으면 보험 기사로 본다
+
+
 def relevant(field, it):
     title, text = it["title"], it["title"] + " " + it["desc"]
     if field == "보험":
-        return any(k in title for k in INSURANCE_STRONG) or text.count("보험") >= 2
+        return (any(k in title for k in INSURANCE_STRONG) or any(k in it["desc"] for k in INSURANCE_DESC)
+                or text.count("보험") >= 2)
     return any(k in text for k in MEDICAL_KEYWORDS)
+
+
+# ───────────── 점검용: 특정 기사가 어느 단계에서 빠지는지 추적 (EXTRA_PROBE=찾을 말) ─────────────
+PROBE = os.getenv("EXTRA_PROBE", "").strip()
+
+
+def _hit(it):
+    return bool(PROBE) and (PROBE in it.get("title", "") or PROBE in it.get("desc", ""))
+
+
+def _p(msg):
+    if PROBE:
+        print(f"[추적:{PROBE}] {msg}")
 
 
 # ───────────── 메인 ─────────────
@@ -309,8 +326,11 @@ def run(nb, primary_items, hours, mark_seen=True):
                     errors.append(f"'{q}' {ex}")
                     stop = ex.fatal
                     continue
+                _p(f"검색어 '{q}' → {len(got)}건 수집" + (f" (이 중 해당 기사 {sum(1 for x in got if _hit(x))}건)" if any(_hit(x) for x in got) else ""))
                 for it in got:
                     it["field"] = field
+                    if _hit(it):
+                        _p(f"발견: {it['title']} [{media_name(it['origin'], mapping)}] ({field}·'{q}')")
                     raw.setdefault(norm_url(it["origin"]), it)
                 time.sleep(0.3)
 
@@ -318,13 +338,25 @@ def run(nb, primary_items, hours, mark_seen=True):
     seen = _load_json(SEEN_PATH, {})
     items, _ = nb.filter_excluded(list(raw.values()))
     kept = []
+    if PROBE:
+        _p(f"전체 수집 {len(raw)}건 중 해당 기사 {sum(1 for x in raw.values() if _hit(x))}건 · 제목 제외 패턴 통과 후 {sum(1 for x in items if _hit(x))}건")
     for it in items:
         if not it["title"] or any(w in it["title"] for w in exclude):
+            if _hit(it):
+                _p(f"제외어에 걸림: {it['title']}")
             continue
-        if not relevant(it["field"], it) or url_hash(it["origin"]) in seen:
+        if not relevant(it["field"], it):
+            if _hit(it):
+                _p(f"분야 관련성 규칙에서 탈락({it['field']}): {it['title']}")
+            continue
+        if url_hash(it["origin"]) in seen:
+            if _hit(it):
+                _p(f"이미 게재한 기사로 기록됨: {it['title']}")
             continue
         it["source"] = media_name(it["origin"], mapping)
         kept.append(it)
+        if _hit(it):
+            _p(f"후보로 남음: {it['title']}")
 
     # 1차 기사(오늘 + 최근 며칠)와 같은 이슈는 제외 — 기존 중복 병합 로직 재사용
     past = load_recent_primary(now)
@@ -332,6 +364,11 @@ def run(nb, primary_items, hours, mark_seen=True):
     past = [a for a in past if (a["title"], a["source"]) not in past_keys]
     clusters = nb.cluster(list(primary_items) + past + kept)
     fresh = [c for c in clusters if all(a.get("extra") for a in c["articles"])]
+    if PROBE:
+        for c in clusters:
+            if any(_hit(a) for a in c["articles"]):
+                tag = "1차 기사와 같은 이슈로 묶여 제외" if c not in fresh else "기타 매체 후보 이슈로 남음"
+                _p(f"{tag}: {c['articles'][0]['title']} (묶인 기사 {len(c['articles'])}건)")
 
     def newest(c):
         return max((a["pub"] for a in c["articles"] if a["pub"]), default=nb.EPOCH)
@@ -352,6 +389,10 @@ def run(nb, primary_items, hours, mark_seen=True):
                         seen[url_hash(x["origin"])] = today
             except Exception as ex:
                 print(f"[2차] AI 정리 건너뜀({field}): {ex}", file=sys.stderr)
+        if PROBE:
+            for i, c in enumerate(pool):
+                if any(_hit(a) for a in c["articles"]):
+                    _p(f"{field} 후보 {len(pool)}개 중 {i + 1}번째 — " + ("게재" if i < PER_FIELD else f"게재 {PER_FIELD}건 밖이라 잘림"))
         pool = pool[:PER_FIELD]
         for c in pool:
             a = c["articles"][0]
