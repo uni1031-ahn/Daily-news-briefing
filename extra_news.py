@@ -70,13 +70,6 @@ DEFAULT_KEYWORDS = {
         "의대 전공의", "필수의료 지역의료", "디지털헬스 의료 AI", "병원 경영",
     ],
 }
-# GA·보험사 사건·사고 검색어: config/extra_keywords.txt 를 쓰고 있어도 항상 '보험' 검색어에 덧붙입니다(누락 방지).
-# 설정 파일에 같은 검색어가 있으면 중복 호출하지 않습니다. 필요 없으면 환경변수 EXTRA_INCIDENT_QUERIES=0
-INCIDENT_QUERIES = [
-    "GA 사건사고", "GA 리베이트", "GA 등록취소 금융감독원", "GA 해킹 개인정보 유출", "법인보험대리점 제재",
-    "보험사 제재 금융감독원", "보험사 사건사고", "보험사 횡령 배임", "보험사 개인정보 유출",
-    "보험 수수료 분급제", "GA 수수료 개편",      # 2027.1 시행 예정 수수료 분급제 이슈(누락 방지)
-]
 DEFAULT_EXCLUDE = ["경품", "이벤트 당첨", "쿠폰", "프로야구", "프로축구", "연예", "맛집"]
 DEFAULT_DOMAINS = {
     "ddaily.co.kr": "디지털데일리", "etnews.com": "전자신문", "zdnet.co.kr": "지디넷코리아",
@@ -87,11 +80,11 @@ DEFAULT_DOMAINS = {
     "joongang.co.kr": "중앙일보", "donga.com": "동아일보", "hani.co.kr": "한겨레",
     "khan.co.kr": "경향신문", "hankookilbo.com": "한국일보", "kmib.co.kr": "국민일보",
     "segye.com": "세계일보", "seoul.co.kr": "서울신문", "ytn.co.kr": "YTN",
-    "insnews.co.kr": "한국보험신문", "insjournal.co.kr": "보험저널", "fins.co.kr": "보험매일", "dailyinsu.com": "보험매일",
+    "insnews.co.kr": "한국보험신문", "insjournal.co.kr": "보험저널", "dailyinsu.com": "보험매일", "fins.co.kr": "보험매일",
     "fntimes.com": "한국금융신문", "kbanker.co.kr": "DFT대한금융신문", "thebell.co.kr": "더벨",
 }
 # 보험 분야 관련성: 제목에 강한 단어가 있거나, 설명에 '보험'이 2번 이상
-INSURANCE_STRONG = ["보험", "손보", "생보", "설계사", "실손", "언더라이팅", "지급여력", "K-ICS", "IFRS17", "재보험", "분급제", "수수료 분급"]
+INSURANCE_STRONG = ["보험", "손보", "생보", "설계사", "실손", "언더라이팅", "지급여력", "K-ICS", "IFRS17", "재보험"]
 MEDICAL_KEYWORDS = [
     "의료", "병원", "의사", "의대", "복지부", "건강보험", "건보", "제약", "바이오", "신약", "수가",
     "환자", "의협", "전공의", "간호", "보건", "진료", "의약", "헬스케어", "의학", "치료제",
@@ -267,7 +260,6 @@ def fetch_query(session, query, cid, key, cutoff, pages=PAGES, display=100):
     return out
 
 
-GA_RE = re.compile(r"(?<![A-Za-z])GA(?![A-Za-z])|법인보험대리점|보험대리점")      # 제목에 '보험'이 없어도 GA 기사면 보험 분야로 본다
 INSURANCE_DESC = ["실손", "보험사", "보험금", "보험료", "손해보험", "생명보험", "설계사"]   # 제목에 없어도 소개문에 있으면 보험 기사로 본다
 
 
@@ -275,7 +267,7 @@ def relevant(field, it):
     title, text = it["title"], it["title"] + " " + it["desc"]
     if field == "보험":
         return (any(k in title for k in INSURANCE_STRONG) or any(k in it["desc"] for k in INSURANCE_DESC)
-                or text.count("보험") >= 2 or bool(GA_RE.search(title)))
+                or text.count("보험") >= 2)
     return any(k in text for k in MEDICAL_KEYWORDS)
 
 
@@ -293,9 +285,8 @@ def _p(msg):
 
 
 # ───────────── 메인 ─────────────
-def run(nb, primary_items, hours, mark_seen=True, shown=None):
-    """반환: (추가할 섹션 dict, 수집 현황 문구, 경고 여부). hours는 호환용(1차 조회 시간).
-    shown: {분야: [오늘 브리핑 1차에 이미 실린 기사 제목...]} — 같은 사건이 기타 매체에 또 나오지 않게 AI가 비교합니다."""
+def run(nb, primary_items, hours, mark_seen=True):
+    """반환: (추가할 섹션 dict, 수집 현황 문구, 경고 여부). hours는 호환용(1차 조회 시간)."""
     t0 = time.time()
     now = datetime.now(timezone.utc)
     warn = []
@@ -318,10 +309,6 @@ def run(nb, primary_items, hours, mark_seen=True, shown=None):
 
     cutoff = now - timedelta(hours=HOURS)
     keywords, mapping, exclude = load_keywords(), load_domains(), load_exclude()
-    if os.getenv("EXTRA_INCIDENT_QUERIES", "1") != "0":
-        keywords = {f: list(qs) for f, qs in keywords.items()}
-        have = set(keywords.setdefault("보험", []))
-        keywords["보험"] += [q for q in INCIDENT_QUERIES if q not in have]
 
     # 조회
     raw, errors, ok, total_q, stop = {}, [], 0, 0, False
@@ -399,10 +386,7 @@ def run(nb, primary_items, hours, mark_seen=True, shown=None):
         cur = getattr(nb, "ai_curate_extra", None)       # AI로 분야 밖 기사 제외 + 같은 사건 묶기 (키가 없거나 실패하면 그대로)
         if cur is not None and pool:
             try:
-                try:
-                    pool, ai_dropped, ai_txt = cur(field, pool, (shown or {}).get(field, []))
-                except TypeError:                          # 예전 news_briefing.py 와도 동작
-                    pool, ai_dropped, ai_txt = cur(field, pool)
+                pool, ai_dropped, ai_txt = cur(field, pool)
                 if ai_txt:
                     ai_notes.append(ai_txt)
                 for c in ai_dropped:                       # 제외한 기사는 내일 다시 올라오지 않게 기록
