@@ -55,7 +55,7 @@ PER_CATEGORY = int(os.getenv("PER_CATEGORY", "5") or "5")          # 카테고�
 SUMMARY_CHARS = int(os.getenv("SUMMARY_CHARS", "230") or "230")    # 요약문 최대 글자 수 (줄이면 메일이 촘촘해짐)
 ROW_PAD = int(os.getenv("ROW_PAD", "4") or "4")                    # 표 행의 위아래 여백(px). 작을수록 촘촘함
 RUN_INFO = {"note": "", "warn": False}     # 메일 상단에 표시할 수집 현황(2차 수집 모듈이 채움)
-BUILD = "v3.16-ai-scope5"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
+BUILD = "v3.17-ai-scope6"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
 
 SOURCES = {
     "보험": {
@@ -779,7 +779,7 @@ MED_SCOPE = ("의료·보건 분야 뉴스: 의료·건강보험 정책과 제�
 INS_SCOPE = ("보험 분야 뉴스(사람의 생명·건강·상해·질병·치매·간병·암·실손 등 인보험 중심): 인보험 상품·특약·약관, 보험사 경영·실적·인수합병, "
              "보험 감독·정책·제도, GA·설계사·판매채널, 보험금 지급·분쟁·소비자 이슈, 보험사기, 보험 관련 디지털·AI.\n"
              "생명보험사·손해보험사·GA의 실적·경영전략·인수합병(M&A)·주가·신사업 기사는 보험사가 중심이면 범위 안입니다(실적에 자동차·재물이 섞여 있어도 보험사 기사이면 범위 안).\n"
-             "범위 밖: 재물·주택·화재·누수·자동차·배상책임 등 인보험이 아닌 보험 상품 기사, 예금보험료·자본규제 같은 재무·건전성 규제 자체가 주제인 기사와 협회장 인선, "
+             "범위 밖: 재물·주택·화재·누수·자동차·배상책임 등 인보험이 아닌 보험 상품 기사, 예금보험료·자본규제 같은 재무·건전성 규제 자체가 주제인 기사와 협회장 인선, 금융감독원·금융위원회의 인사·조직 기사, 은행·증권·카드 등 다른 업권에 대한 검사·제재·여신 기사, "
              "은행·증권·카드·대출·부동산·가상자산이 중심인 기사(보험은 곁다리), 일반 금융 정보, 기업 홍보·행사·사회공헌, 보험과 관계없는 일반 뉴스.\n"
              "범위 안(제외하면 안 됨): 보험협회·보험개발원 소식과 인보험 관련 업계 포럼·행사 보도, 암보험·건강보험·치매·간병·종신 등 인보험 신상품 소식.")
 AI_STATS = {"calls": 0, "fail": 0, "dropped": 0}
@@ -870,6 +870,48 @@ def ai_filter_other(field: str, clusters, strict: bool = False) -> int:
     AI_STATS["dropped"] += n
     print(f"[AI 판정·{field}·기타] {len(todo)}건 중 {n}건 제외")
     return n
+
+
+def ai_filter_scope_all(field: str, clusters) -> int:
+    """보험 분야: 이미 섹션이 정해진 기사(기타 아님)도 인보험 범위 밖이 '분명한' 것만 AI로 제외한다.
+    너무 많이 제외하려 하거나(40% 초과) 이유가 '범위 안'이라고 말하면 그 판정은 쓰지 않는다."""
+    if field != "보험" or not (os.getenv("ANTHROPIC_API_KEY") or "").strip():
+        return 0
+    todo = [c for c in clusters if c.get("cat") not in ("기타", "제외")][:100]
+    if len(todo) < 5:
+        return 0
+    prompt = ("당신은 보험 분야 뉴스 브리핑의 편집자입니다. 아래 기사는 이미 보험 섹션으로 분류된 기사입니다. "
+              "그중 보험 분야 뉴스가 '분명히 아닌' 기사만 골라내세요.\n\n"
+              f"범위\n{INS_SCOPE}\n\n"
+              "판정: keep=범위에 들거나 애매한 기사, drop=범위 밖이 분명한 기사. 보험사·GA·설계사·보험협회·보험 감독·보험 상품·보험금 기사는 모두 keep입니다. "
+              "drop은 은행·증권·카드 중심 기사, 금융당국 내부 인사, 보험과 무관한 행사·홍보처럼 보험이 중심이 아닌 경우입니다. "
+              "대부분의 기사는 keep입니다. why를 먼저 쓰고 그 이유와 같은 방향으로 keep을 쓰세요.\n\n기사:\n"
+              + "\n".join(_ai_line(i, c) for i, c in enumerate(todo, 1))
+              + '\n\n반드시 JSON 배열만 출력하세요. 형식: [{"n":번호,"why":"이유 한 문장","keep":true},...] (drop인 기사만 적어도 됩니다)')
+    res = parse_json_loose(claude_text(prompt, max_tokens=4000))
+    if not isinstance(res, list):
+        print("[AI 판정·보험·섹션] 결과를 읽지 못해 그대로 씁니다")
+        return 0
+    drops = []
+    for r in res:
+        try:
+            i = int(r.get("n"))
+        except Exception:
+            continue
+        if 1 <= i <= len(todo) and r.get("keep") is False:
+            if _contradicts(r.get("why")):
+                print(f"[AI 모순·보험·섹션] 이유가 범위 안이라 남김: {todo[i - 1]['articles'][0]['title'][:40]} — {str(r.get('why', ''))[:50]}")
+                continue
+            drops.append((todo[i - 1], str(r.get("why", ""))))
+    if len(drops) > 0.4 * len(todo):
+        print(f"[AI 이상·보험·섹션] {len(todo)}건 중 {len(drops)}건 제외는 과도해 판정을 쓰지 않습니다")
+        return 0
+    for c, why in drops:
+        c["cat"], c["cat_how"] = "제외", "AI"
+        print(f"[AI 제외·보험·섹션] {c['articles'][0]['title'][:50]} — {why[:60]}")
+    AI_STATS["dropped"] += len(drops)
+    print(f"[AI 판정·보험·섹션] {len(todo)}건 중 {len(drops)}건 제외")
+    return len(drops)
 
 
 def ai_curate_extra(field: str, pool):
@@ -1409,6 +1451,7 @@ def main():
             assign_categories(clusters, field)
             print_diagnostics(field, items, clusters)
             ai_filter_other(field, clusters)          # '기타'로 분류된 기사 중 이 분야 뉴스가 아닌 것(화장품·공연·지자체 복지 등)을 AI로 제외
+            ai_filter_scope_all(field, clusters)      # 보험: 섹션이 정해진 기사도 인보험 범위 밖이 분명하면 제외(은행 검사·금감원 인사 등)
             if args.sections:
                 continue
             selected = select_by_category(clusters, field, PER_CATEGORY)
