@@ -2,7 +2,7 @@ name: oncology-weekly
 
 on:
   schedule:
-    - cron: "0 23 * * 0"      # 일요일 23:00 UTC = 월요일 08:00 KST
+    - cron: "0 12 * * 6"      # 토요일 12:00 UTC = 토요일 21:00 KST (월요일 아침 브리핑까지 여유 확보. GitHub 예약 실행은 수 시간 늦을 수 있음)
   workflow_dispatch:
 
 permissions:
