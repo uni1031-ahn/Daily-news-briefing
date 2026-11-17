@@ -75,6 +75,7 @@ DEFAULT_KEYWORDS = {
 INCIDENT_QUERIES = [
     "GA 사건사고", "GA 리베이트", "GA 등록취소 금융감독원", "GA 해킹 개인정보 유출", "법인보험대리점 제재",
     "보험사 제재 금융감독원", "보험사 사건사고", "보험사 횡령 배임", "보험사 개인정보 유출",
+    "보험 수수료 분급제", "GA 수수료 개편",      # 2027.1 시행 예정 수수료 분급제 이슈(누락 방지)
 ]
 DEFAULT_EXCLUDE = ["경품", "이벤트 당첨", "쿠폰", "프로야구", "프로축구", "연예", "맛집"]
 DEFAULT_DOMAINS = {
@@ -86,11 +87,11 @@ DEFAULT_DOMAINS = {
     "joongang.co.kr": "중앙일보", "donga.com": "동아일보", "hani.co.kr": "한겨레",
     "khan.co.kr": "경향신문", "hankookilbo.com": "한국일보", "kmib.co.kr": "국민일보",
     "segye.com": "세계일보", "seoul.co.kr": "서울신문", "ytn.co.kr": "YTN",
-    "insnews.co.kr": "한국보험신문", "insjournal.co.kr": "보험저널", "dailyinsu.com": "보험매일",
+    "insnews.co.kr": "한국보험신문", "insjournal.co.kr": "보험저널", "fins.co.kr": "보험매일", "dailyinsu.com": "보험매일",
     "fntimes.com": "한국금융신문", "kbanker.co.kr": "DFT대한금융신문", "thebell.co.kr": "더벨",
 }
 # 보험 분야 관련성: 제목에 강한 단어가 있거나, 설명에 '보험'이 2번 이상
-INSURANCE_STRONG = ["보험", "손보", "생보", "설계사", "실손", "언더라이팅", "지급여력", "K-ICS", "IFRS17", "재보험"]
+INSURANCE_STRONG = ["보험", "손보", "생보", "설계사", "실손", "언더라이팅", "지급여력", "K-ICS", "IFRS17", "재보험", "분급제", "수수료 분급"]
 MEDICAL_KEYWORDS = [
     "의료", "병원", "의사", "의대", "복지부", "건강보험", "건보", "제약", "바이오", "신약", "수가",
     "환자", "의협", "전공의", "간호", "보건", "진료", "의약", "헬스케어", "의학", "치료제",
