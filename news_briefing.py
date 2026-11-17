@@ -27,6 +27,7 @@ import concurrent.futures
 import difflib
 import hashlib
 import html
+import json
 import os
 import re
 import smtplib
@@ -55,7 +56,7 @@ PER_CATEGORY = int(os.getenv("PER_CATEGORY", "5") or "5")          # 카테고�
 SUMMARY_CHARS = int(os.getenv("SUMMARY_CHARS", "230") or "230")    # 요약문 최대 글자 수 (줄이면 메일이 촘촘해짐)
 ROW_PAD = int(os.getenv("ROW_PAD", "4") or "4")                    # 표 행의 위아래 여백(px). 작을수록 촘촘함
 RUN_INFO = {"note": "", "warn": False}     # 메일 상단에 표시할 수집 현황(2차 수집 모듈이 채움)
-BUILD = "v3.17-ai-scope6"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
+BUILD = "v3.22-incident"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
 
 SOURCES = {
     "보험": {
@@ -150,6 +151,50 @@ CATEGORY_MAP = {
         ("학술·학회", ["학회", "학술", "논문", "연구", "세미나", "심포지엄", "학술대회", "저널"]),
     ],
 }
+
+# GA 사건·사고 기사(불법 리베이트·등록취소·해킹·수사 등)는 금감원·제재 같은 말이 들어 있어도 '정책·감독'이 아니라
+# 'GA·판매채널'로 모읍니다. 조건: ① 제목이나 본문 앞부분에 GA/법인보험대리점이 있고 ② 제목에 사건·사고성 단어가 있을 때.
+GA_TERM_RE = re.compile(r"(?<![A-Za-z])GA(?![A-Za-z])|법인보험대리점|보험대리점|GA업계|GA사")
+GA_INCIDENT_RE = re.compile(
+    r"리베이트|등록취소|영업정지|업무정지|과징금|제재|징계|퇴출|송치|검찰|경찰|수사|압수수색|기소|고발|"
+    r"횡령|배임|해킹|유출|사건|사고(?!예방)|불법|부당|불건전|허위|사기|먹튀|적발|논란|파문|위기")
+# GA 단어가 제목에 없고 본문 앞부분에만 있을 때(예: 제목은 '한국보험금융 등록취소')는 더 분명한 사건 단어만 인정
+GA_INCIDENT_STRONG_RE = re.compile(
+    r"리베이트|등록취소|영업정지|업무정지|과징금|제재|송치|검찰|경찰|수사|압수수색|기소|고발|횡령|배임|해킹|유출")
+GA_CATEGORY = "GA·판매채널"
+
+
+# 보험회사(생보·손보사) 관련 사건·사고 → '보험사 동향' 후보. GA 기사는 GA·판매채널이 우선(위 규칙에 먼저 걸림).
+INSURER_CATEGORY = "보험사 동향"
+INSURER_TERM_RE = re.compile(
+    r"보험사|생보사|손보사|보험업계|생명보험|손해보험|"
+    r"삼성생명|삼성화재|한화생명|한화손보|한화손해|교보생명|현대해상|DB손보|DB손해|DB생명|KB손보|KB손해|KB라이프|메리츠화재|메리츠|"
+    r"흥국화재|흥국생명|롯데손보|롯데손해|NH농협생명|NH농협손보|농협생명|농협손보|신한라이프|동양생명|ABL생명|푸본현대|라이나|처브|AIA생명|"
+    r"메트라이프|하나생명|하나손보|iM라이프|KDB생명|MG손보|캐롯|카카오페이손보|라이프플래닛|IBK연금|BNP파리바카디프")
+INSURER_INCIDENT_RE = re.compile(
+    r"제재|과태료|과징금|영업정지|업무정지|징계|횡령|배임|해킹|유출|사건|사고(?!예방)|불법|부당|불완전판매|허위|사기|"
+    r"검찰|경찰|송치|기소|고발|압수수색|적발|논란|파문|위기|소송")
+
+
+def is_insurer_incident(cl) -> bool:
+    for a in cl["articles"]:
+        t = a.get("title", "")
+        if GA_TERM_RE.search(t):          # GA가 중심이면 GA·판매채널 몫
+            continue
+        if INSURER_TERM_RE.search(t) and INSURER_INCIDENT_RE.search(t):
+            return True
+    return False
+
+
+def is_ga_incident(cl) -> bool:
+    for a in cl["articles"]:
+        t = a.get("title", "")
+        if GA_TERM_RE.search(t) and GA_INCIDENT_RE.search(t):
+            return True
+        if GA_TERM_RE.search((a.get("desc") or "")[:150]) and GA_INCIDENT_RE.search(t) and GA_INCIDENT_STRONG_RE.search(t):
+            return True
+    return False
+
 
 # 제목에 아래 문구가 있으면 제외 (홍보·동정·단신성 기사). 필요하면 추가/삭제하세요.
 EXCLUDE_TITLE_PATTERNS = [
@@ -530,6 +575,11 @@ def assign_categories(clusters, field):
         else:
             cat = "기타"
         c["cat"], c["cat_how"], c["cat_label"] = cat, how_by_cat.get(cat, "없음"), label_by_cat.get(cat, "")
+        if field == "보험":      # 사건·사고 기사 표시(기존 분류는 그대로 두고, 선정 단계에서 GA·판매채널 / 보험사 동향의 후보로도 올림)
+            if is_ga_incident(c):
+                c["inc_cat"] = GA_CATEGORY
+            elif is_insurer_incident(c):
+                c["inc_cat"] = INSURER_CATEGORY
 
 
 def _newest(c):
@@ -542,29 +592,45 @@ def _base(c):
 
 
 def select_by_category(clusters, field, per_cat):
-    """카테고리별로 화제성 점수 상위 per_cat건 선정. 반환: [(카테고리, [클러스터...]), ...]"""
+    """카테고리별로 화제성 점수 상위 per_cat건 선정. 반환: [(카테고리, [클러스터...]), ...]
+    보험의 GA 사건·사고 기사(ga_incident)는 'GA·판매채널'과 원래 분류 양쪽의 후보가 되어 평소 기사와 같은 기준으로 경쟁합니다.
+    GA·판매채널에서 뽑히면 거기에 싣고, 뽑히지 않으면 원래 분류에서 다시 경쟁하므로(같은 기사가 두 번 나오지는 않음) 누락되지 않습니다."""
     use_buzz = os.getenv("USE_EXTERNAL_BUZZ", "1") != "0"
     kws = IMPORTANT_KEYWORDS.get(field, [])
     buckets = collections.defaultdict(list)
     for c in clusters:
         buckets[c["cat"]].append(c)
+    if field == "보험":
+        for c in clusters:
+            tgt = c.get("inc_cat")
+            if tgt and c.get("cat") not in ("제외", tgt):
+                buckets[tgt].append(c)
     order = [cat for cat, _ in CATEGORY_MAP.get(field, [])] + ["기타"]
-    result = []
-    for cat in order:
-        lst = buckets.get(cat, [])
+    # GA·판매채널을 먼저 뽑아야 사건·사고 기사가 그쪽에서 선정됐는지 알 수 있음 (출력 순서는 order 그대로)
+    first = [GA_CATEGORY, INSURER_CATEGORY] if field == "보험" else []
+    pick_order = first + [c for c in order if c not in first]
+    taken = set()
+    picked = {}
+    for cat in pick_order:
+        lst = [c for c in buckets.get(cat, []) if id(c) not in taken]
         if not lst:
             continue
         cand = sorted(lst, key=lambda c: (_base(c), _newest(c)), reverse=True)[: per_cat * 2]
         for c in cand:
-            title = c["articles"][0]["title"]
-            c["buzz"] = external_buzz(title) if use_buzz else 0
-            if use_buzz:
-                time.sleep(0.7)
-            hit = sum(1 for k in kws if k in title)
-            c["score"] = _base(c) + min(c["buzz"], 15) * 1.0 + min(hit, 2) * 1.5
+            if "score" not in c:
+                title = c["articles"][0]["title"]
+                c["buzz"] = external_buzz(title) if use_buzz else 0
+                if use_buzz:
+                    time.sleep(0.7)
+                hit = sum(1 for k in kws if k in title)
+                c["score"] = _base(c) + min(c["buzz"], 15) * 1.0 + min(hit, 2) * 1.5
         top = sorted(cand, key=lambda c: (c["score"], _newest(c)), reverse=True)[:per_cat]
-        result.append((cat, top))
-    return result
+        taken |= {id(c) for c in top}
+        picked[cat] = top
+        for c in top:
+            if c.get("inc_cat") == cat and c.get("cat") != cat:
+                print(f"[사건사고] {cat} 후보로 경쟁해 선정: {c['articles'][0]['title'][:45]} (원래 분류: {c['cat']})")
+    return [(cat, picked[cat]) for cat in order if cat in picked]
 
 
 def print_diagnostics(field, items, clusters):
@@ -1058,6 +1124,40 @@ def build_markdown(sections):
     return "\n".join(lines)[:60000]
 
 
+def onc_section_html() -> str:
+    """'항암 주간 요약' 꼭지(oncology_weekly.py가 만든 HTML 조각)를 읽어 옵니다.
+    기본: 월요일 브리핑에만, 그리고 최근 6일 안에 만들어진 요약일 때만 붙입니다. 없거나 오래되면 빈 문자열(브리핑은 그대로).
+    ONC_SHOW=always 면 요일과 상관없이 최신본을 붙이고, ONC_SHOW=off 면 붙이지 않습니다."""
+    mode = (os.getenv("ONC_SHOW", "monday") or "monday").strip().lower()
+    now = datetime.now(KST)
+    if mode == "off":
+        print("[항암 주간 요약] ONC_SHOW=off → 붙이지 않습니다")
+        return ""
+    if mode != "always" and now.weekday() != 0:
+        print("[항암 주간 요약] 월요일이 아니라 이번에는 붙이지 않습니다")
+        return ""
+    try:
+        with open("data/oncology/latest.json", encoding="utf-8") as f:
+            meta = json.load(f)
+        if meta.get("demo"):
+            print("[항암 주간 요약] 데모 데이터라 붙이지 않습니다")
+            return ""
+        end = datetime.strptime(meta["end"], "%Y-%m-%d").replace(tzinfo=KST)
+        if (now - end).days > 6:
+            print(f"[항암 주간 요약] 최신본({meta['end']})이 오래되어 이번에는 붙이지 않습니다")
+            return ""
+        with open("data/oncology/latest_section.html", encoding="utf-8") as f:
+            frag = f.read()
+        print(f"[항암 주간 요약] {meta.get('week')} 꼭지를 의료 영역에 붙입니다")
+        return "<tr><td style='padding:6px 24px 0;'>" + frag + "</td></tr>"
+    except FileNotFoundError:
+        print("[항암 주간 요약] data/oncology/latest.json 또는 latest_section.html 이 없어 붙이지 않습니다")
+        return ""
+    except Exception as ex:
+        print(f"[항암 주간 요약] 건너뜀: {ex}")
+        return ""
+
+
 def build_email_html(sections) -> str:
     """이메일용 HTML (표 레이아웃 + 인라인 CSS: Gmail/네이버/Outlook 등에서 깨지지 않도록)."""
     esc = html.escape
@@ -1091,6 +1191,9 @@ def build_email_html(sections) -> str:
         col = "#c0392b" if RUN_INFO["warn"] else "#888"
         out.append(f"<tr><td style='padding:2px 24px 6px;font-size:11.5px;color:{col};line-height:1.4;'>"
                    f"{esc(RUN_INFO['note'])}</td></tr>")
+    onc_html = onc_section_html()
+    med_keys = [k for k in sections if (k.split(" · ")[0] if " · " in k else k) == "의료"]
+    last_med = med_keys[-1] if med_keys else None
     cur_field = None
     for key, top in sections.items():
         fld, cat = (key.split(" · ", 1) + [""])[:2] if " · " in key else (key, "")
@@ -1113,6 +1216,8 @@ def build_email_html(sections) -> str:
                 meta.append(f"🔥관련보도 {c['buzz']}곳")
             if c.get("cat_how") == "섹션" and c.get("cat_label"):
                 meta.append("📂" + esc(c["cat_label"]))
+            if c.get("inc_cat") and c.get("inc_cat") == cat:
+                meta.append("🚨GA 사건·사고" if cat == GA_CATEGORY else "🚨보험사 사건·사고")
             summ = (f"<div style='font-size:12.5px;color:#444;margin-top:1px;line-height:1.35;'>{esc(c['summary'])}</div>"
                     if c.get("summary") else "")
             rows.append(
@@ -1132,6 +1237,11 @@ def build_email_html(sections) -> str:
             "<th style='width:36px;padding:4px;border:1px solid #dde2e8;font-size:13px;color:#333;'>No</th>"
             "<th style='padding:4px;border:1px solid #dde2e8;font-size:13px;color:#333;'>기사</th></tr>"
             + "".join(rows) + "</table></td></tr>")
+        if key == last_med and onc_html:      # 의료 영역의 마지막 분류 아래에 '항암 주간 요약' 꼭지
+            out.append(onc_html)
+            onc_html = ""
+    if onc_html:      # 의료 영역이 없으면 맨 아래에
+        out.append(onc_html)
     out.append(
         "<tr><td style='padding:14px 24px;font-size:12px;color:#888;line-height:1.5;border-top:1px solid #eee;'>"
         "이 메일은 자동으로 발송되었습니다. 요약문은 기사 본문 앞부분을 바탕으로 만들어져 원문과 다를 수 있으니 "
