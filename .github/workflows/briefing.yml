@@ -2,7 +2,7 @@ name: daily-news-briefing
 
 on:
   schedule:
-    - cron: "0 23 * * *"
+    - cron: "47 21 * * *"
   workflow_dispatch:
     inputs:
       send_mail:
