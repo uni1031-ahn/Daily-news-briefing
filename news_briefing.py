@@ -56,7 +56,7 @@ PER_CATEGORY = int(os.getenv("PER_CATEGORY", "5") or "5")          # 카테고�
 SUMMARY_CHARS = int(os.getenv("SUMMARY_CHARS", "230") or "230")    # 요약문 최대 글자 수 (줄이면 메일이 촘촘해짐)
 ROW_PAD = int(os.getenv("ROW_PAD", "4") or "4")                    # 표 행의 위아래 여백(px). 작을수록 촘촘함
 RUN_INFO = {"note": "", "warn": False}     # 메일 상단에 표시할 수집 현황(2차 수집 모듈이 채움)
-BUILD = "v3.22-incident"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
+BUILD = "v3.23-extra-dedupe"                                             # 메일 맨 아래에 표시되는 버전 (새 코드 적용 확인용)
 
 SOURCES = {
     "보험": {
@@ -980,7 +980,7 @@ def ai_filter_scope_all(field: str, clusters) -> int:
     return len(drops)
 
 
-def ai_curate_extra(field: str, pool):
+def ai_curate_extra(field: str, pool, shown=()):
     """기타 매체 후보를 한 번에 판정: ① 이 분야 뉴스가 아닌 것 제외 ② 같은 사건을 다룬 기사 묶기.
     반환: (정리된 목록, 제외된 묶음 목록, 요약문구). 키가 없거나 실패하면 (원래 목록, [], '')."""
     if not pool or not (os.getenv("ANTHROPIC_API_KEY") or "").strip():
@@ -993,9 +993,12 @@ def ai_curate_extra(field: str, pool):
               + " 범위 안 기사는 반드시 keep=true입니다. 대부분의 기사는 범위 안일 수 있으니 전부 제외하지 마세요. "
               "why를 먼저 쓰고 그 이유와 같은 방향으로 keep을 쓰세요.\n"
               "2) keep=true인 기사 중 같은 사건·같은 통계·같은 발표를 다룬 기사끼리 묶으세요. 제목이 달라도 같은 사건이면 같은 묶음입니다. "
-              "묶음에는 2건 이상 든 경우만 적으세요.\n\n기사:\n"
+              "묶음에는 2건 이상 든 경우만 적으세요.\n"
+              + ("3) 아래 '이미 오늘 브리핑에 실린 기사'와 같은 사건·같은 발표를 다룬 기사는 dup=true로 표시하세요(제목이 달라도 같은 사건이면 중복이며, 중복 기사는 제외됩니다). 그 밖의 기사는 dup=false입니다.\n" if shown else "")
+              + "\n기사:\n"
               + "\n".join(_ai_line(i, c) for i, c in enumerate(pool, 1))
-              + '\n\n반드시 JSON 객체만 출력하세요. 형식: {"items":[{"n":1,"why":"이유 한 문장","keep":true},...],"groups":[[번호,번호],...]} (모든 기사에 하나씩)')
+              + (("\n\n이미 오늘 브리핑에 실린 기사:\n" + "\n".join(f"- {t}" for t in list(shown)[:60])) if shown else "")
+              + '\n\n반드시 JSON 객체만 출력하세요. 형식: {"items":[{"n":1,"why":"이유 한 문장","keep":true,"dup":false},...],"groups":[[번호,번호],...]} (모든 기사에 하나씩)')
     res = parse_json_loose(claude_text(prompt, max_tokens=8000))
     if not isinstance(res, dict) or not isinstance(res.get("items"), list):
         print(f"[AI 판정·{field}·기타 매체] 결과를 읽지 못해 규칙 결과를 그대로 씁니다")
@@ -1015,6 +1018,10 @@ def ai_curate_extra(field: str, pool):
         try:
             i = int(r.get("n")) - 1
         except Exception:
+            continue
+        if 0 <= i < len(pool) and shown and r.get("dup") is True:
+            drop.add(i)
+            why[str(i + 1)] = "이미 브리핑에 실린 사건과 중복"
             continue
         if 0 <= i < len(pool) and r.get("keep") is False:
             if _contradicts(r.get("why")):
@@ -1601,9 +1608,12 @@ def main():
 
     if extra_news is not None:      # 2차 수집: 지정 신문사 밖 기사를 '기타 매체'로 보완 (실패해도 1차는 그대로)
         try:
+            shown = {}      # 1차로 이미 브리핑에 실린 기사 제목(분야별) — 기타 매체에 같은 사건이 또 나오지 않게 비교용
+            for key, top in sections.items():
+                shown.setdefault(key.split(" · ")[0], []).extend(c["articles"][0]["title"] for c in top)
             extra_sections, note, warn = extra_news.run(
                 nb=sys.modules[__name__], primary_items=primary_all, hours=HOURS,
-                mark_seen=(not args.dry_run) and os.getenv("SEND_MAIL", "1") != "0")
+                mark_seen=(not args.dry_run) and os.getenv("SEND_MAIL", "1") != "0", shown=shown)
             sections.update(extra_sections)
             RUN_INFO.update(note=note, warn=warn)
         except Exception as ex:
