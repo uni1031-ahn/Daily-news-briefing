@@ -1481,8 +1481,39 @@ def archive_articles(all_clusters, chosen_ids):
 
 
 # ───────────────────────── 포털 연동 (메일과 같은 내용을 웹 포털에도 올림) ─────────────────────────
-def export_portal(sections):
-    """오늘 브리핑에 실린 기사를 포털(Cloudflare)로 보냅니다. PORTAL_URL/SYNC_TOKEN이 없으면 건너뜀. 실패해도 메일 발송은 계속."""
+PORTAL_EXTRA = os.getenv("PORTAL_EXTRA", "1") != "0"      # 0이면 아래 '수집' 기록을 보내지 않음(문제가 생기면 바로 끄는 용도)
+
+
+def portal_extra_items(all_clusters, chosen_ids, day, seen_links, seen_ids):
+    """메일에 실리지 않은 1차 수집 기사(이슈 묶음의 대표 1건씩)를 포털 '기록용' 항목으로 만든다. rank 0, cat '수집', field 유지.
+    AI가 분야 밖으로 제외한 기사(cat '제외')와, 이미 보낸 주소·id는 뺀다."""
+    out = []
+    for fld, clusters in (all_clusters or {}).items():
+        for c in clusters:
+            if id(c) in chosen_ids or c.get("cat") == "제외" or not c.get("articles"):
+                continue
+            a = c["articles"][0]
+            link = c.get("url") or a.get("link") or ""
+            iid = article_id(fld, a["source"], a["title"]) + "_" + day.replace("-", "")
+            if not link or link in seen_links or iid in seen_ids:
+                continue
+            seen_links.add(link)
+            seen_ids.add(iid)
+            pub = a["pub"].astimezone(KST).strftime("%Y-%m-%d %H:%M") if a.get("pub") else day
+            srcs = sorted({x["source"] for x in c["articles"]})
+            out.append({
+                "id": iid, "day": day, "field": fld, "cat": "수집", "rank": 0,
+                "title": a["title"], "link": link,
+                "source": srcs[0] if srcs else a["source"], "sources": srcs,
+                "summary": shorten(clean_text(a.get("desc") or ""), ARCHIVE_DESC_CHARS), "buzz": c.get("buzz", 0) or 0, "pub": pub,
+                "sec": "|".join((a.get("cat_raw") or a.get("sec_raw") or [])[:3])[:60],
+            })
+    return out
+
+
+def export_portal(sections, all_clusters=None, chosen_ids=None):
+    """오늘 브리핑에 실린 기사를 포털(Cloudflare)로 보냅니다. PORTAL_URL/SYNC_TOKEN이 없으면 건너뜀. 실패해도 메일 발송은 계속.
+    all_clusters/chosen_ids를 주면, 메일에 실리지 않은 수집 기사(대표 1건씩)도 rank 0·cat '수집'으로 이어서 보냅니다(기록용)."""
     url = (os.getenv("PORTAL_URL") or "").strip().rstrip("/")
     tok = (os.getenv("SYNC_TOKEN") or "").strip()
     if not (url and tok):
@@ -1512,6 +1543,21 @@ def export_portal(sections):
                 print(f"[포털 실패] {r.status_code} {r.text[:200]}")
                 return False
         print(f"[포털] 오늘 브리핑 {len(items)}건을 포털에 올렸습니다")
+        if PORTAL_EXTRA and all_clusters:      # 기록용 추가분: 실패해도 위의 결과(메일 게재분 전송)에는 영향 없음
+            try:
+                extras = portal_extra_items(all_clusters, chosen_ids or set(), day,
+                                            {it["link"] for it in items}, {it["id"] for it in items})
+                sent_n = 0
+                for k in range(0, len(extras), 200):
+                    r = requests.post(url + "/api/sync/news", json={"items": extras[k:k + 200]}, timeout=60,
+                                      headers={"Authorization": "Bearer " + tok, "User-Agent": "insurance-radar-sync/1.0"})
+                    if r.status_code != 200:
+                        print(f"[포털·수집 기록 실패] {r.status_code} {r.text[:200]}")
+                        break
+                    sent_n += len(extras[k:k + 200])
+                print(f"[포털] 수집 기사 {sent_n}/{len(extras)}건을 기록용(rank 0·cat 수집)으로 추가했습니다")
+            except Exception as ex:
+                print(f"[포털·수집 기록 실패] {ex}")
         return True
     except Exception as ex:
         print(f"[포털 실패] {ex}")
@@ -1633,7 +1679,7 @@ def main():
     print("\n" + text_body)
     if args.dry_run:
         return
-    export_portal(sections)       # 메일 발송 생략(SEND_MAIL=0)이어도 포털에는 올립니다. 포털 문제로 메일이 막히지 않음
+    export_portal(sections, all_clusters, chosen_ids)       # 메일 발송 생략(SEND_MAIL=0)이어도 포털에는 올립니다. 포털 문제로 메일이 막히지 않음
     if ARCHIVE_ON:
         try:
             archive_articles(all_clusters, chosen_ids)
