@@ -92,6 +92,7 @@ MEDICAL_KEYWORDS = [
 TRACKING_PARAMS = ("utm_", "fbclid", "gclid", "ref", "from")
 
 
+PORTAL_ALL = os.getenv("EXTRA_PORTAL_ALL", "0") == "1"
 PORTAL_CANDIDATES = []     # 게재하지 않은 2차 후보 이슈(대표 기사 기준). news_briefing.export_portal이 기록용으로 읽어 감 (메일·게재에는 영향 없음)
 
 
@@ -404,8 +405,9 @@ def run(nb, primary_items, hours, mark_seen=True, shown=None):
             for i, c in enumerate(pool):
                 if any(_hit(a) for a in c["articles"]):
                     _p(f"{field} 후보 {len(pool)}개 중 {i + 1}번째 — " + ("게재" if i < PER_FIELD else f"게재 {PER_FIELD}건 밖이라 잘림"))
-        PORTAL_CANDIDATES.extend([c for c in fresh if c["articles"][0]["field"] == field and id(c) not in pool_ids0]
-                                 + pool[PER_FIELD:])        # AI 판정 대상 밖 + 판정 후 게재 건수 밖 (AI가 제외한 것·묶여 흡수된 것은 빠짐)
+        PORTAL_CANDIDATES.extend(pool[PER_FIELD:])          # AI 판정을 거친 뒤 게재 건수 밖으로 밀린 이슈 (AI가 제외한 것·묶여 흡수된 것은 빠짐)
+        if PORTAL_ALL:                                       # 선택(EXTRA_PORTAL_ALL=1): AI 판정 대상 밖(후보가 많아 잘린 것)까지. 하루 1,000건 안팎이라 기본은 끔
+            PORTAL_CANDIDATES.extend(c for c in fresh if c["articles"][0]["field"] == field and id(c) not in pool_ids0)
         pool = pool[:PER_FIELD]
         for c in pool:
             a = c["articles"][0]
