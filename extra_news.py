@@ -92,6 +92,9 @@ MEDICAL_KEYWORDS = [
 TRACKING_PARAMS = ("utm_", "fbclid", "gclid", "ref", "from")
 
 
+PORTAL_CANDIDATES = []     # 게재하지 않은 2차 후보 이슈(대표 기사 기준). news_briefing.export_portal이 기록용으로 읽어 감 (메일·게재에는 영향 없음)
+
+
 class ApiError(Exception):
     def __init__(self, msg, fatal=False):
         super().__init__(msg)
@@ -148,10 +151,11 @@ def domain_of(url):
 
 def media_name(url, mapping):
     d = domain_of(url)
-    for dom, name in mapping.items():
-        if d == dom or d.endswith("." + dom):
-            return name
-    return d or "기타"
+    best = None
+    for dom, name in mapping.items():          # 가장 길게(구체적으로) 일치하는 도메인 우선: biz.chosun.com → 조선비즈
+        if (d == dom or d.endswith("." + dom)) and (best is None or len(dom) > len(best[0])):
+            best = (dom, name)
+    return best[1] if best else (d or "기타")
 
 
 def norm_url(url):
@@ -285,11 +289,12 @@ def _p(msg):
 
 
 # ───────────── 메인 ─────────────
-def run(nb, primary_items, hours, mark_seen=True):
+def run(nb, primary_items, hours, mark_seen=True, shown=None):
     """반환: (추가할 섹션 dict, 수집 현황 문구, 경고 여부). hours는 호환용(1차 조회 시간)."""
     t0 = time.time()
     now = datetime.now(timezone.utc)
     warn = []
+    PORTAL_CANDIDATES.clear()
 
     # 1차 수집 현황 점검 (조용한 실패를 조기에 알아채기 위함)
     per_src = collections.Counter(a["source"] for a in primary_items)
@@ -383,6 +388,7 @@ def run(nb, primary_items, hours, mark_seen=True):
             for c in fresh:
                 if c["articles"][0]["field"] == field and id(c) not in cut and any(_hit(a) for a in c["articles"]):
                     _p(f"{field}: 후보가 많아 AI 판정 대상({PER_FIELD * 10}개)에도 못 들고 잘림: {c['articles'][0]['title']}")
+        pool_ids0 = {id(c) for c in pool}
         cur = getattr(nb, "ai_curate_extra", None)       # AI로 분야 밖 기사 제외 + 같은 사건 묶기 (키가 없거나 실패하면 그대로)
         if cur is not None and pool:
             try:
@@ -398,6 +404,8 @@ def run(nb, primary_items, hours, mark_seen=True):
             for i, c in enumerate(pool):
                 if any(_hit(a) for a in c["articles"]):
                     _p(f"{field} 후보 {len(pool)}개 중 {i + 1}번째 — " + ("게재" if i < PER_FIELD else f"게재 {PER_FIELD}건 밖이라 잘림"))
+        PORTAL_CANDIDATES.extend([c for c in fresh if c["articles"][0]["field"] == field and id(c) not in pool_ids0]
+                                 + pool[PER_FIELD:])        # AI 판정 대상 밖 + 판정 후 게재 건수 밖 (AI가 제외한 것·묶여 흡수된 것은 빠짐)
         pool = pool[:PER_FIELD]
         for c in pool:
             a = c["articles"][0]

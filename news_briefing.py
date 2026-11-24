@@ -1494,12 +1494,12 @@ def portal_extra_items(all_clusters, chosen_ids, day, seen_links, seen_ids):
                 continue
             a = c["articles"][0]
             link = c.get("url") or a.get("link") or ""
-            iid = article_id(fld, a["source"], a["title"]) + "_" + day.replace("-", "")
+            pub = a["pub"].astimezone(KST).strftime("%Y-%m-%d %H:%M") if a.get("pub") else day
+            iid = article_id(fld, a["source"], a["title"]) + "_" + pub[:10].replace("-", "")     # 발행일 기준 id: 2차 조회(48시간)가 겹쳐도 같은 기사가 매일 새로 쌓이지 않음
             if not link or link in seen_links or iid in seen_ids:
                 continue
             seen_links.add(link)
             seen_ids.add(iid)
-            pub = a["pub"].astimezone(KST).strftime("%Y-%m-%d %H:%M") if a.get("pub") else day
             srcs = sorted({x["source"] for x in c["articles"]})
             out.append({
                 "id": iid, "day": day, "field": fld, "cat": "수집", "rank": 0,
@@ -1511,9 +1511,10 @@ def portal_extra_items(all_clusters, chosen_ids, day, seen_links, seen_ids):
     return out
 
 
-def export_portal(sections, all_clusters=None, chosen_ids=None):
+def export_portal(sections, all_clusters=None, chosen_ids=None, extra_cands=None):
     """오늘 브리핑에 실린 기사를 포털(Cloudflare)로 보냅니다. PORTAL_URL/SYNC_TOKEN이 없으면 건너뜀. 실패해도 메일 발송은 계속.
-    all_clusters/chosen_ids를 주면, 메일에 실리지 않은 수집 기사(대표 1건씩)도 rank 0·cat '수집'으로 이어서 보냅니다(기록용)."""
+    all_clusters/chosen_ids를 주면, 메일에 실리지 않은 수집 기사(대표 1건씩)도 rank 0·cat '수집'으로 이어서 보냅니다(기록용).
+    extra_cands는 2차 수집(extra_news)이 게재하지 않은 후보 이슈 목록입니다."""
     url = (os.getenv("PORTAL_URL") or "").strip().rstrip("/")
     tok = (os.getenv("SYNC_TOKEN") or "").strip()
     if not (url and tok):
@@ -1543,9 +1544,12 @@ def export_portal(sections, all_clusters=None, chosen_ids=None):
                 print(f"[포털 실패] {r.status_code} {r.text[:200]}")
                 return False
         print(f"[포털] 오늘 브리핑 {len(items)}건을 포털에 올렸습니다")
-        if PORTAL_EXTRA and all_clusters:      # 기록용 추가분: 실패해도 위의 결과(메일 게재분 전송)에는 영향 없음
+        if PORTAL_EXTRA and (all_clusters or extra_cands):      # 기록용 추가분: 실패해도 위의 결과(메일 게재분 전송)에는 영향 없음
             try:
-                extras = portal_extra_items(all_clusters, chosen_ids or set(), day,
+                merged = {f: list(cl) for f, cl in (all_clusters or {}).items()}
+                for c in extra_cands or []:
+                    merged.setdefault(c["articles"][0].get("field") or "보험", []).append(c)
+                extras = portal_extra_items(merged, chosen_ids or set(), day,
                                             {it["link"] for it in items}, {it["id"] for it in items})
                 sent_n = 0
                 for k in range(0, len(extras), 200):
@@ -1679,7 +1683,8 @@ def main():
     print("\n" + text_body)
     if args.dry_run:
         return
-    export_portal(sections, all_clusters, chosen_ids)       # 메일 발송 생략(SEND_MAIL=0)이어도 포털에는 올립니다. 포털 문제로 메일이 막히지 않음
+    export_portal(sections, all_clusters, chosen_ids,
+                  list(getattr(extra_news, "PORTAL_CANDIDATES", []) or []) if extra_news is not None else None)       # 메일 발송 생략(SEND_MAIL=0)이어도 포털에는 올립니다. 포털 문제로 메일이 막히지 않음
     if ARCHIVE_ON:
         try:
             archive_articles(all_clusters, chosen_ids)
